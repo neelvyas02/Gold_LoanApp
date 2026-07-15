@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CustomersRouteImport } from './routes/customers'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CustomersAddRouteImport } from './routes/customers.add'
 
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
@@ -28,34 +29,42 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CustomersAddRoute = CustomersAddRouteImport.update({
+  id: '/add',
+  path: '/add',
+  getParentRoute: () => CustomersRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/customers': typeof CustomersRoute
+  '/customers': typeof CustomersRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/customers/add': typeof CustomersAddRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/customers': typeof CustomersRoute
+  '/customers': typeof CustomersRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/customers/add': typeof CustomersAddRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/customers': typeof CustomersRoute
+  '/customers': typeof CustomersRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/customers/add': typeof CustomersAddRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/customers' | '/dashboard'
+  fullPaths: '/' | '/customers' | '/dashboard' | '/customers/add'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/customers' | '/dashboard'
-  id: '__root__' | '/' | '/customers' | '/dashboard'
+  to: '/' | '/customers' | '/dashboard' | '/customers/add'
+  id: '__root__' | '/' | '/customers' | '/dashboard' | '/customers/add'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  CustomersRoute: typeof CustomersRoute
+  CustomersRoute: typeof CustomersRouteWithChildren
   DashboardRoute: typeof DashboardRoute
 }
 
@@ -82,12 +91,31 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/customers/add': {
+      id: '/customers/add'
+      path: '/add'
+      fullPath: '/customers/add'
+      preLoaderRoute: typeof CustomersAddRouteImport
+      parentRoute: typeof CustomersRoute
+    }
   }
 }
 
+interface CustomersRouteChildren {
+  CustomersAddRoute: typeof CustomersAddRoute
+}
+
+const CustomersRouteChildren: CustomersRouteChildren = {
+  CustomersAddRoute: CustomersAddRoute,
+}
+
+const CustomersRouteWithChildren = CustomersRoute._addFileChildren(
+  CustomersRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  CustomersRoute: CustomersRoute,
+  CustomersRoute: CustomersRouteWithChildren,
   DashboardRoute: DashboardRoute,
 }
 export const routeTree = rootRouteImport
