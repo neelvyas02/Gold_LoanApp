@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as RemindersRouteImport } from './routes/reminders'
 import { Route as PaymentsRouteImport } from './routes/payments'
@@ -18,6 +19,11 @@ import { Route as CustomersRouteImport } from './routes/customers'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CustomersAddRouteImport } from './routes/customers.add'
 
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ReportsRoute = ReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
@@ -67,6 +73,7 @@ export interface FileRoutesByFullPath {
   '/payments': typeof PaymentsRoute
   '/reminders': typeof RemindersRoute
   '/reports': typeof ReportsRoute
+  '/settings': typeof SettingsRoute
   '/customers/add': typeof CustomersAddRoute
 }
 export interface FileRoutesByTo {
@@ -77,6 +84,7 @@ export interface FileRoutesByTo {
   '/payments': typeof PaymentsRoute
   '/reminders': typeof RemindersRoute
   '/reports': typeof ReportsRoute
+  '/settings': typeof SettingsRoute
   '/customers/add': typeof CustomersAddRoute
 }
 export interface FileRoutesById {
@@ -88,6 +96,7 @@ export interface FileRoutesById {
   '/payments': typeof PaymentsRoute
   '/reminders': typeof RemindersRoute
   '/reports': typeof ReportsRoute
+  '/settings': typeof SettingsRoute
   '/customers/add': typeof CustomersAddRoute
 }
 export interface FileRouteTypes {
@@ -100,6 +109,7 @@ export interface FileRouteTypes {
     | '/payments'
     | '/reminders'
     | '/reports'
+    | '/settings'
     | '/customers/add'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -110,6 +120,7 @@ export interface FileRouteTypes {
     | '/payments'
     | '/reminders'
     | '/reports'
+    | '/settings'
     | '/customers/add'
   id:
     | '__root__'
@@ -120,6 +131,7 @@ export interface FileRouteTypes {
     | '/payments'
     | '/reminders'
     | '/reports'
+    | '/settings'
     | '/customers/add'
   fileRoutesById: FileRoutesById
 }
@@ -131,10 +143,18 @@ export interface RootRouteChildren {
   PaymentsRoute: typeof PaymentsRoute
   RemindersRoute: typeof RemindersRoute
   ReportsRoute: typeof ReportsRoute
+  SettingsRoute: typeof SettingsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reports': {
       id: '/reports'
       path: '/reports'
@@ -214,6 +234,7 @@ const rootRouteChildren: RootRouteChildren = {
   PaymentsRoute: PaymentsRoute,
   RemindersRoute: RemindersRoute,
   ReportsRoute: ReportsRoute,
+  SettingsRoute: SettingsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
