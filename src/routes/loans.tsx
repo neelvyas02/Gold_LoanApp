@@ -1,58 +1,73 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
+import { ApiClient } from "@/lib/api-client";
 
 export const Route = createFileRoute("/loans")({
+  loader: async () => {
+    return ApiClient.getLoans();
+  },
   component: LoansPage,
   head: () => ({
     meta: [
-      { title: "Loans — GoldVault" },
+      { title: "Loans — Vyas Finance" },
       { name: "description", content: "All active, closed and overdue gold loans." },
     ],
   }),
 });
 
-const LOANS = [
-  { no: "GV-2041", cust: "Priya Nair", amount: 120000, rate: 12, date: "12 Oct 2025", maturity: "12 Oct 2026", status: "Active" },
-  { no: "GV-2040", cust: "Anand Kumar", amount: 85000, rate: 11, date: "08 Oct 2025", maturity: "08 Oct 2026", status: "Active" },
-  { no: "GV-2039", cust: "Sneha Reddy", amount: 210000, rate: 13, date: "01 Jun 2025", maturity: "01 Jun 2026", status: "Overdue" },
-  { no: "GV-2038", cust: "Vikram Shetty", amount: 55000, rate: 12, date: "22 Sep 2025", maturity: "22 Sep 2026", status: "Active" },
-  { no: "GV-2037", cust: "Meera Iyer", amount: 145000, rate: 12, date: "15 Feb 2025", maturity: "15 Feb 2026", status: "Closed" },
-  { no: "GV-2036", cust: "Rahul Das", amount: 72000, rate: 11.5, date: "02 Oct 2025", maturity: "02 Oct 2026", status: "Active" },
-];
-
 function statusBadge(s: string) {
   if (s === "Active") return "bg-[color:var(--success)]/10 text-[color:var(--success)]";
+  if (s === "Due Soon") return "bg-warning/20 text-[color:var(--warning-foreground)]";
   if (s === "Overdue") return "bg-destructive/10 text-destructive";
   return "bg-muted text-muted-foreground";
 }
 
+interface LoanItem {
+  id: string;
+  loanNumber: string;
+  customer?: { name: string };
+  loanAmount: number;
+  interestRate: number;
+  loanDate: string;
+  maturityDate: string;
+  balance: number;
+  status: string;
+}
+
 function LoansPage() {
+  const router = useRouter();
+  const loans = Route.useLoaderData() as LoanItem[];
+
   return (
     <AppShell
       title="Loans"
       subtitle="Manage all gold loans across your branch"
       actions={
-        <Button className="bg-gold text-gold-foreground hover:bg-gold/90 shadow-[var(--shadow-gold)]">
-          <Plus className="h-4 w-4 mr-1.5" /> New Loan
+        <Button asChild className="bg-gold text-gold-foreground hover:bg-gold/90 shadow-[var(--shadow-gold)]">
+          <Link to="/customers/add" search={{ search: undefined, tab: undefined }}>
+            <Plus className="h-4 w-4 mr-1.5" /> New Loan
+          </Link>
         </Button>
       }
     >
-      <Card className="rounded-2xl bg-white shadow-[var(--shadow-soft)] overflow-hidden">
+      <Card className="rounded-2xl bg-card border-border shadow-[var(--shadow-soft)] overflow-hidden">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow className="hover:bg-transparent">
+              <TableRow className="hover:bg-transparent border-border">
                 <TableHead className="pl-6">Loan No.</TableHead>
                 <TableHead>Customer</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Rate</TableHead>
+                <TableHead>Loan Amount</TableHead>
+                <TableHead>Outstanding Balance</TableHead>
+                <TableHead>ROI</TableHead>
                 <TableHead>Loan Date</TableHead>
                 <TableHead>Maturity</TableHead>
                 <TableHead>Status</TableHead>
@@ -60,20 +75,57 @@ function LoansPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {LOANS.map((l) => (
-                <TableRow key={l.no} className="hover:bg-[color:var(--muted)]/60">
-                  <TableCell className="pl-6 font-mono text-xs">{l.no}</TableCell>
-                  <TableCell className="font-medium">{l.cust}</TableCell>
-                  <TableCell>₹{l.amount.toLocaleString("en-IN")}</TableCell>
-                  <TableCell>{l.rate}%</TableCell>
-                  <TableCell className="text-muted-foreground">{l.date}</TableCell>
-                  <TableCell className="text-muted-foreground">{l.maturity}</TableCell>
+              {loans.map((l) => (
+                <TableRow key={l.id} className="hover:bg-muted/40 border-border">
+                  <TableCell className="pl-6 font-mono text-xs text-foreground">{l.loanNumber}</TableCell>
+                  <TableCell className="font-medium text-foreground">
+                    {l.customer?.name || "-"}
+                  </TableCell>
+                  <TableCell className="text-foreground">₹{l.loanAmount.toLocaleString("en-IN")}</TableCell>
+                  <TableCell className="font-semibold text-destructive">₹{l.balance.toLocaleString("en-IN")}</TableCell>
+                  <TableCell className="text-muted-foreground">{l.interestRate}% p.a.</TableCell>
+                  <TableCell className="text-muted-foreground">{l.loanDate}</TableCell>
+                  <TableCell className="text-muted-foreground">{l.maturityDate}</TableCell>
                   <TableCell><Badge className={statusBadge(l.status)}>{l.status}</Badge></TableCell>
                   <TableCell className="text-right pr-6">
-                    <Button variant="ghost" size="sm" className="text-[color:var(--gold)]">View</Button>
+                    {l.status !== "Closed" && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive ml-2"
+                        onClick={async () => {
+                          if (l.balance > 0.01) {
+                            toast.error(
+                              `Cannot close loan. Outstanding balance is ₹${l.balance.toLocaleString(
+                                "en-IN"
+                              )}. Must be zero. Please record a payment to settle.`
+                            );
+                            return;
+                          }
+                          if (confirm(`Are you sure you want to close loan ${l.loanNumber}?`)) {
+                            try {
+                              await ApiClient.closeLoan(l.id);
+                              toast.success("Loan closed successfully!");
+                              router.invalidate();
+                            } catch (e: any) {
+                              toast.error(e.message || "Failed to close loan");
+                            }
+                          }
+                        }}
+                      >
+                        Close
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
+              {loans.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={9} className="text-center py-10 text-muted-foreground">
+                    No loans found.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </div>

@@ -1,0 +1,231 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+generator server_client {
+  provider = "prisma-client-js"
+  output   = "../server/node_modules/.prisma/client"
+}
+
+model Customer {
+  id              String          @id @default(uuid())
+  customerNumber  String          @unique // e.g., CUS0001
+  name            String
+  phone           String          @unique
+  email           String          @unique
+  alternatePhone  String?
+  aadhaar         String          @unique
+  pan             String          @unique
+  dob             String?
+  occupation      String
+  address         String
+  nomineeName     String
+  nomineePhone    String
+  profilePhoto    String?
+  aadhaarDocument String?
+  panDocument     String?
+  passwordHash    String?
+  isActivated     Boolean         @default(false)
+  isActive        Boolean         @default(true)
+  isArchived      Boolean         @default(false)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  auth            CustomerAuth?
+  refreshTokens   RefreshToken[]
+  otps            CustomerOTP[]
+  emailOtps       EmailOTP[]
+  loans           Loan[]
+  documents       Document[]
+  tickets         SupportTicket[]
+  notifications   Notification[]
+}
+
+model CustomerAuth {
+  id             String    @id @default(uuid())
+  customerId     String    @unique
+  customer       Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  passwordHash   String
+  isActivated    Boolean   @default(false)
+  isVerified     Boolean   @default(false)
+  isActive       Boolean   @default(true)
+  lastLogin      DateTime?
+  failedAttempts Int       @default(0)
+  lockedUntil    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model RefreshToken {
+  id         String   @id @default(uuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  token      String   @unique
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+}
+
+model CustomerOTP {
+  id         String    @id @default(uuid())
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  mobile     String?
+  email      String?
+  otp        String
+  expiresAt  DateTime
+  verified   Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+}
+
+enum OTPPurpose {
+  ACTIVATE
+  RESET_PASSWORD
+  LOGIN
+}
+
+model EmailOTP {
+  id         String     @id @default(uuid())
+  customerId String
+  customer   Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  email      String
+  otpHash    String
+  purpose    OTPPurpose @default(ACTIVATE)
+  expiresAt  DateTime
+  verified   Boolean    @default(false)
+  attempts   Int        @default(0)
+  createdAt  DateTime   @default(now())
+}
+
+model Loan {
+  id                 String      @id @default(uuid())
+  loanNumber         String      @unique // e.g., GL20260001
+  customerId         String
+  customer           Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  loanType           String      @default("regular") // regular, bullet, monthly
+  loanAmount         Float
+  interestRate       Float
+  loanDate           String      // YYYY-MM-DD
+  loanClosingDate    String      // YYYY-MM-DD
+  loanTenure         Int         // in months
+  totalInterest      Float
+  totalPayable       Float
+  outstandingBalance Float
+  status             String      @default("Active") // Active, Due Soon, Overdue, Closed
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  ornaments          Ornament[]
+  payments           Payment[]
+}
+
+model Ornament {
+  id                 String          @id @default(uuid())
+  loanId             String
+  loan               Loan            @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  type               String
+  category           String
+  customOrnamentName String?
+  pieces             Int             @default(1)
+  grossWeight        Float
+  netWeight          Float
+  purity             String
+  stoneWeight        Float?          @default(0)
+  estimatedValue     Float
+  remarks            String?
+  photos             OrnamentPhoto[]
+}
+
+model OrnamentPhoto {
+  id         String   @id @default(uuid())
+  ornamentId String
+  ornament   Ornament @relation(fields: [ornamentId], references: [id], onDelete: Cascade)
+  fileName   String
+  filePath   String
+  createdAt  DateTime @default(now())
+}
+
+model Document {
+  id           String   @id @default(uuid())
+  customerId   String
+  customer     Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  documentType String   // Aadhaar, PAN, etc.
+  fileName     String
+  filePath     String
+  createdAt    DateTime @default(now())
+}
+
+model Payment {
+  id            String   @id @default(uuid())
+  receiptNumber String   @unique // e.g., RCPT000001
+  loanId        String
+  loan          Loan     @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  amount        Float
+  paymentDate   String   // YYYY-MM-DD
+  paymentMode   String   // Cash, UPI, Bank Transfer, Cheque
+  remarks       String?
+  createdAt     DateTime @default(now())
+}
+
+model Settings {
+  id                  String  @id @default("default")
+  companyName         String  @default("Vyas Finance")
+  companyAddress      String  @default("MG Road, Bengaluru, KA 560001")
+  contactNumber       String  @default("+91 98450 00000")
+  defaultInterestRate Float   @default(12.0)
+  defaultGoldRate     Float   @default(6000.0)
+  reminderDays        Int     @default(10)
+  loanPrefix          String  @default("GL")
+  receiptPrefix       String  @default("RCPT")
+  theme               String  @default("light")
+}
+
+model AuditLog {
+  id            String   @id @default(uuid())
+  module        String
+  action        String
+  referenceId   String?
+  description   String
+  performerId   String?
+  performerRole String?
+  ipAddress     String?
+  createdAt     DateTime @default(now())
+}
+
+model Notification {
+  id         String    @id @default(uuid())
+  title      String
+  message    String
+  type       String    // overdue, due_5, due_10, payment_success, customer_archived, loan_closed, ticket_reply, system
+  priority   String    @default("normal") // low, normal, high
+  actionUrl  String?
+  isRead     Boolean   @default(false)
+  readAt     DateTime?
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  createdAt  DateTime  @default(now())
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String
+  role      String   @default("Employee") // Admin, Employee
+  createdAt DateTime @default(now())
+}
+
+model SupportTicket {
+  id           String   @id @default(uuid())
+  ticketNumber String   @unique // e.g., TKT0001
+  customerId   String
+  customer     Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  category     String   // Loan Inquiry, Payment Issue, Gold Details, Document Issue, Other
+  subject      String
+  description  String
+  status       String   @default("Open") // Open, In Progress, Resolved, Closed
+  adminReply   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

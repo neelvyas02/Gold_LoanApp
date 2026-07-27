@@ -1,11 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowUpRight,
-  CheckCircle2,
   Clock,
   IndianRupee,
-  Users,
   Wallet,
+  TrendingUp,
+  HelpCircle,
+  Plus
 } from "lucide-react";
 import {
   Area,
@@ -20,61 +21,72 @@ import { AppShell } from "@/components/app-shell";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ApiClient } from "@/lib/api-client";
 
 export const Route = createFileRoute("/dashboard")({
+  loader: async () => {
+    return ApiClient.getDashboard();
+  },
   component: DashboardPage,
   head: () => ({
     meta: [
-      { title: "Dashboard — GoldVault" },
+      { title: "Dashboard — Vyas Finance" },
       { name: "description", content: "Overview of customers, loans and payments." },
     ],
   }),
 });
 
-const STATS = [
-  { label: "Total Customers", value: "1,240", change: "+3.4%", icon: Users, tone: "text-foreground" },
-  { label: "Active Loans", value: "312", change: "+1.2%", icon: Wallet, tone: "text-[color:var(--gold)]" },
-  { label: "Closed Loans", value: "918", change: "+5.1%", icon: CheckCircle2, tone: "text-[color:var(--success)]" },
-  { label: "Total Loan Amount", value: "₹4.2Cr", change: "+2.8%", icon: IndianRupee, tone: "text-foreground" },
-  { label: "Due in 10 Days", value: "24", change: "Attention", icon: Clock, tone: "text-destructive" },
-];
-
-const CHART = [
-  { m: "Jan", v: 24 }, { m: "Feb", v: 32 }, { m: "Mar", v: 28 },
-  { m: "Apr", v: 41 }, { m: "May", v: 38 }, { m: "Jun", v: 52 },
-  { m: "Jul", v: 47 }, { m: "Aug", v: 61 }, { m: "Sep", v: 55 },
-  { m: "Oct", v: 68 }, { m: "Nov", v: 72 }, { m: "Dec", v: 84 },
-];
-
-const RECENT_APPS = [
-  { id: "GV-2041", name: "Priya Nair", amount: "₹1,20,000", status: "Approved" },
-  { id: "GV-2040", name: "Anand Kumar", amount: "₹85,000", status: "Pending" },
-  { id: "GV-2039", name: "Sneha Reddy", amount: "₹2,10,000", status: "Approved" },
-  { id: "GV-2038", name: "Vikram Shetty", amount: "₹55,000", status: "Review" },
-];
-
-const RECENT_PAY = [
-  { id: "RCPT-8821", name: "Meera Iyer", amount: "₹12,500", mode: "UPI" },
-  { id: "RCPT-8820", name: "Rahul Das", amount: "₹8,200", mode: "Cash" },
-  { id: "RCPT-8819", name: "Kavita Sharma", amount: "₹15,000", mode: "Bank" },
-  { id: "RCPT-8818", name: "Suresh Pillai", amount: "₹6,750", mode: "UPI" },
-];
-
-const DUE = [
-  { name: "Arjun Rao", loan: "GV-1982", days: 1, amount: "₹42,000" },
-  { name: "Divya Menon", loan: "GV-1975", days: 3, amount: "₹18,500" },
-  { name: "Naveen K", loan: "GV-1968", days: 6, amount: "₹64,300" },
-  { name: "Lakshmi P", loan: "GV-1961", days: 9, amount: "₹27,800" },
-];
-
 function DashboardPage() {
+  const data = Route.useLoaderData();
+
+  const STATS = [
+    {
+      label: "Active Loans",
+      value: data.activeLoans.toLocaleString("en-IN"),
+      change: `Overdue: ${data.overdue}`,
+      icon: Wallet,
+      tone: "text-[color:var(--gold)]",
+    },
+    {
+      label: "Outstanding Loan Balance",
+      value: `₹${data.outstandingBalance.toLocaleString("en-IN")}`,
+      change: `Interest Earned: ₹${data.interestEarned.toLocaleString("en-IN")}`,
+      icon: IndianRupee,
+      tone: "text-foreground",
+      tooltip: "Total unpaid loan balance across all active loans.",
+    },
+    {
+      label: "Today's Loans",
+      value: `₹${data.todayDisbursed.toLocaleString("en-IN")}`,
+      change: "Disbursed Today",
+      icon: TrendingUp,
+      tone: "text-[color:var(--success)]",
+    },
+    {
+      label: "Today's Collections",
+      value: `₹${data.todayCollected.toLocaleString("en-IN")}`,
+      change: "Collected Today",
+      icon: IndianRupee,
+      tone: "text-foreground",
+    },
+    {
+      label: "Due Soon / Overdue",
+      value: (data.dueSoon + data.overdue).toLocaleString("en-IN"),
+      change: `Due Soon: ${data.dueSoon}`,
+      icon: Clock,
+      tone: "text-destructive",
+    },
+  ];
+
   return (
     <AppShell
       title="Dashboard"
       subtitle="Today's overview of your gold loan business"
       actions={
-        <Button className="bg-gold text-gold-foreground hover:bg-gold/90 shadow-[var(--shadow-gold)]">
-          New Loan
+        <Button asChild className="bg-gold text-gold-foreground hover:bg-gold/90 shadow-[var(--shadow-gold)]">
+          <Link to="/customers/add" search={{ search: undefined, tab: undefined }}>
+            <Plus className="h-4 w-4 mr-1.5" /> New Loan
+          </Link>
         </Button>
       }
     >
@@ -83,14 +95,21 @@ function DashboardPage() {
         {STATS.map((s) => {
           const Icon = s.icon;
           return (
-            <Card key={s.label} className="p-5 rounded-2xl border-border/70 shadow-[var(--shadow-soft)] bg-white">
+            <Card key={s.label} className="p-5 rounded-2xl border-border bg-card shadow-[var(--shadow-soft)]">
               <div className="flex items-start justify-between">
-                <div className="h-9 w-9 rounded-lg bg-[color:var(--muted)] grid place-items-center">
+                <div className="h-9 w-9 rounded-lg bg-muted grid place-items-center">
                   <Icon className={`h-4 w-4 ${s.tone}`} />
                 </div>
-                <span className="text-[11px] text-muted-foreground">{s.change}</span>
+                {s.tooltip ? (
+                  <div className="flex items-center gap-1 cursor-help" title={s.tooltip}>
+                    <span className="text-[11px] text-muted-foreground">{s.change}</span>
+                    <HelpCircle className="h-3.5 w-3.5 text-muted-foreground/75" />
+                  </div>
+                ) : (
+                  <span className="text-[11px] text-muted-foreground">{s.change}</span>
+                )}
               </div>
-              <p className="text-2xl font-semibold mt-4 tracking-tight">{s.value}</p>
+              <p className="text-2xl font-semibold mt-4 tracking-tight text-foreground">{s.value}</p>
               <p className="text-xs text-muted-foreground mt-1">{s.label}</p>
             </Card>
           );
@@ -99,23 +118,27 @@ function DashboardPage() {
 
       {/* Chart + Due */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
-        <Card className="lg:col-span-2 p-6 rounded-2xl bg-white shadow-[var(--shadow-soft)]">
+        <Card className="lg:col-span-2 p-6 rounded-2xl bg-card border-border shadow-[var(--shadow-soft)]">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-sm font-medium">Monthly Loan Disbursed</p>
-              <p className="text-xs text-muted-foreground">Amount in Lakhs (₹)</p>
+              <p className="text-sm font-medium text-foreground">Monthly Loan Disbursed vs Collected</p>
+              <p className="text-xs text-muted-foreground">Amount in Lakhs (₹) - Last 6 Months</p>
             </div>
-            <Badge variant="secondary" className="bg-accent text-accent-foreground">
-              2025
+            <Badge variant="secondary" className="bg-muted text-foreground">
+              {new Date().getFullYear()}
             </Badge>
           </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={CHART} margin={{ left: -20, right: 8, top: 8, bottom: 0 }}>
+              <AreaChart data={data.chart} margin={{ left: -20, right: 8, top: 8, bottom: 0 }}>
                 <defs>
                   <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="var(--gold)" stopOpacity={0.35} />
                     <stop offset="100%" stopColor="var(--gold)" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="success" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="var(--success)" stopOpacity={0.35} />
+                    <stop offset="100%" stopColor="var(--success)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
@@ -124,30 +147,32 @@ function DashboardPage() {
                 <Tooltip
                   contentStyle={{
                     borderRadius: 12,
+                    backgroundColor: "var(--card)",
                     border: "1px solid var(--border)",
                     fontSize: 12,
                   }}
                 />
-                <Area type="monotone" dataKey="v" stroke="var(--gold)" strokeWidth={2.5} fill="url(#gold)" />
+                <Area type="monotone" dataKey="v" name="Disbursed" stroke="var(--gold)" strokeWidth={2.5} fill="url(#gold)" />
+                <Area type="monotone" dataKey="collected" name="Collected" stroke="var(--success)" strokeWidth={2.5} fill="url(#success)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </Card>
 
-        <Card className="p-6 rounded-2xl bg-white shadow-[var(--shadow-soft)]">
+        <Card className="p-6 rounded-2xl bg-card border-border shadow-[var(--shadow-soft)]">
           <div className="flex items-center justify-between mb-4">
-            <p className="text-sm font-medium">Upcoming Due Loans</p>
+            <p className="text-sm font-medium text-foreground">Upcoming Due Loans</p>
             <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
           </div>
           <ul className="space-y-3">
-            {DUE.map((d) => (
+            {data.upcomingDues.map((d: any) => (
               <li key={d.loan} className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-lg bg-[color:var(--muted)] grid place-items-center text-xs font-semibold">
-                  {d.name.split(" ").map((n) => n[0]).join("")}
+                <div className="h-9 w-9 rounded-lg bg-muted grid place-items-center text-xs font-semibold text-foreground">
+                  {d.name.split(" ").map((n: string) => n[0]).join("")}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium truncate">{d.name}</p>
-                  <p className="text-xs text-muted-foreground">{d.loan} · {d.amount}</p>
+                  <p className="text-sm font-medium text-foreground truncate">{d.name}</p>
+                  <p className="text-xs text-muted-foreground">{d.loan} · ₹{d.amount.toLocaleString("en-IN")}</p>
                 </div>
                 <Badge
                   className={
@@ -158,61 +183,75 @@ function DashboardPage() {
                       : "bg-muted text-muted-foreground hover:bg-muted"
                   }
                 >
-                  {d.days}d
+                  {d.days < 0 ? `${Math.abs(d.days)}d overdue` : `${d.days}d left`}
                 </Badge>
               </li>
             ))}
+            {data.upcomingDues.length === 0 && (
+              <div className="text-center py-8 text-xs text-muted-foreground">
+                No upcoming dues found.
+              </div>
+            )}
           </ul>
         </Card>
       </div>
 
       {/* Lists */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
-        <Card className="p-6 rounded-2xl bg-white shadow-[var(--shadow-soft)]">
+        <Card className="p-6 rounded-2xl bg-card border-border shadow-[var(--shadow-soft)]">
           <div className="flex items-center justify-between mb-4">
-            <p className="text-sm font-medium">Recent Loan Applications</p>
-            <a className="text-xs text-[color:var(--gold)] hover:underline cursor-pointer">View all</a>
+            <p className="text-sm font-medium text-foreground">Recent Loan Disbursements</p>
+            <Link to="/loans" className="text-xs text-[color:var(--gold)] hover:underline cursor-pointer">View all</Link>
           </div>
           <div className="divide-y divide-border">
-            {RECENT_APPS.map((r) => (
-              <div key={r.id} className="py-3 flex items-center gap-3">
+            {data.recentLoans.map((r: any) => (
+              <div key={r.id} className="py-3 flex items-center gap-3 border-border">
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium truncate">{r.name}</p>
-                  <p className="text-xs text-muted-foreground">{r.id}</p>
+                  <p className="text-sm font-medium text-foreground truncate">{r.name}</p>
+                  <p className="text-xs text-muted-foreground">Active Loan</p>
                 </div>
-                <p className="text-sm font-semibold">{r.amount}</p>
+                <p className="text-sm font-semibold text-foreground">₹{r.amount.toLocaleString("en-IN")}</p>
                 <Badge
-                  variant="secondary"
                   className={
-                    r.status === "Approved"
-                      ? "bg-[color:var(--success)]/10 text-[color:var(--success)]"
-                      : r.status === "Pending"
-                      ? "bg-warning/20 text-[color:var(--warning-foreground)]"
-                      : "bg-muted text-muted-foreground"
+                    r.status === "Active" || r.status === "Due Soon"
+                      ? "bg-success/15 text-success border-transparent"
+                      : r.status === "Overdue"
+                      ? "bg-destructive/15 text-destructive border-transparent"
+                      : "bg-muted text-muted-foreground border-transparent"
                   }
                 >
                   {r.status}
                 </Badge>
               </div>
             ))}
+            {data.recentLoans.length === 0 && (
+              <div className="text-center py-8 text-xs text-muted-foreground">
+                No recent loans found.
+              </div>
+            )}
           </div>
         </Card>
 
-        <Card className="p-6 rounded-2xl bg-white shadow-[var(--shadow-soft)]">
+        <Card className="p-6 rounded-2xl bg-card border-border shadow-[var(--shadow-soft)]">
           <div className="flex items-center justify-between mb-4">
-            <p className="text-sm font-medium">Recent Payments</p>
-            <a className="text-xs text-[color:var(--gold)] hover:underline cursor-pointer">View all</a>
+            <p className="text-sm font-medium text-foreground">Recent Payments Received</p>
+            <Link to="/payments" className="text-xs text-[color:var(--gold)] hover:underline cursor-pointer">View all</Link>
           </div>
           <div className="divide-y divide-border">
-            {RECENT_PAY.map((r) => (
-              <div key={r.id} className="py-3 flex items-center gap-3">
+            {data.recentPayments.map((r: any) => (
+              <div key={r.id} className="py-3 flex items-center gap-3 border-border">
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium truncate">{r.name}</p>
-                  <p className="text-xs text-muted-foreground">{r.id} · {r.mode}</p>
+                  <p className="text-sm font-medium text-foreground truncate">{r.cust}</p>
+                  <p className="text-xs text-muted-foreground">{r.loan} · {r.mode}</p>
                 </div>
-                <p className="text-sm font-semibold text-[color:var(--success)]">{r.amount}</p>
+                <p className="text-sm font-semibold text-[color:var(--success)]">₹{r.amount.toLocaleString("en-IN")}</p>
               </div>
             ))}
+            {data.recentPayments.length === 0 && (
+              <div className="text-center py-8 text-xs text-muted-foreground">
+                No recent payments found.
+              </div>
+            )}
           </div>
         </Card>
       </div>

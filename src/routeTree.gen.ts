@@ -9,16 +9,35 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SupportTicketsRouteImport } from './routes/support-tickets'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as RemindersRouteImport } from './routes/reminders'
+import { Route as PortalRouteImport } from './routes/portal'
 import { Route as PaymentsRouteImport } from './routes/payments'
 import { Route as LoansRouteImport } from './routes/loans'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CustomersRouteImport } from './routes/customers'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CustomersIndexRouteImport } from './routes/customers.index'
+import { Route as PortalSupportRouteImport } from './routes/portal.support'
+import { Route as PortalSignupRouteImport } from './routes/portal.signup'
+import { Route as PortalSettingsRouteImport } from './routes/portal.settings'
+import { Route as PortalProfileRouteImport } from './routes/portal.profile'
+import { Route as PortalPaymentsRouteImport } from './routes/portal.payments'
+import { Route as PortalLoginRouteImport } from './routes/portal.login'
+import { Route as PortalLoanRouteImport } from './routes/portal.loan'
+import { Route as PortalForgotPasswordRouteImport } from './routes/portal.forgot-password'
+import { Route as PortalDocumentsRouteImport } from './routes/portal.documents'
+import { Route as PortalDashboardRouteImport } from './routes/portal.dashboard'
+import { Route as PortalActivateAccountRouteImport } from './routes/portal.activate-account'
 import { Route as CustomersAddRouteImport } from './routes/customers.add'
 
+const SupportTicketsRoute = SupportTicketsRouteImport.update({
+  id: '/support-tickets',
+  path: '/support-tickets',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -32,6 +51,11 @@ const ReportsRoute = ReportsRouteImport.update({
 const RemindersRoute = RemindersRouteImport.update({
   id: '/reminders',
   path: '/reminders',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PortalRoute = PortalRouteImport.update({
+  id: '/portal',
+  path: '/portal',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PaymentsRoute = PaymentsRouteImport.update({
@@ -59,6 +83,66 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CustomersIndexRoute = CustomersIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => CustomersRoute,
+} as any)
+const PortalSupportRoute = PortalSupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalSignupRoute = PortalSignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalSettingsRoute = PortalSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalProfileRoute = PortalProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalPaymentsRoute = PortalPaymentsRouteImport.update({
+  id: '/payments',
+  path: '/payments',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalLoginRoute = PortalLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalLoanRoute = PortalLoanRouteImport.update({
+  id: '/loan',
+  path: '/loan',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalForgotPasswordRoute = PortalForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalDocumentsRoute = PortalDocumentsRouteImport.update({
+  id: '/documents',
+  path: '/documents',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalDashboardRoute = PortalDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalActivateAccountRoute = PortalActivateAccountRouteImport.update({
+  id: '/activate-account',
+  path: '/activate-account',
+  getParentRoute: () => PortalRoute,
+} as any)
 const CustomersAddRoute = CustomersAddRouteImport.update({
   id: '/add',
   path: '/add',
@@ -71,21 +155,48 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/loans': typeof LoansRoute
   '/payments': typeof PaymentsRoute
+  '/portal': typeof PortalRouteWithChildren
   '/reminders': typeof RemindersRoute
   '/reports': typeof ReportsRoute
   '/settings': typeof SettingsRoute
+  '/support-tickets': typeof SupportTicketsRoute
   '/customers/add': typeof CustomersAddRoute
+  '/portal/activate-account': typeof PortalActivateAccountRoute
+  '/portal/dashboard': typeof PortalDashboardRoute
+  '/portal/documents': typeof PortalDocumentsRoute
+  '/portal/forgot-password': typeof PortalForgotPasswordRoute
+  '/portal/loan': typeof PortalLoanRoute
+  '/portal/login': typeof PortalLoginRoute
+  '/portal/payments': typeof PortalPaymentsRoute
+  '/portal/profile': typeof PortalProfileRoute
+  '/portal/settings': typeof PortalSettingsRoute
+  '/portal/signup': typeof PortalSignupRoute
+  '/portal/support': typeof PortalSupportRoute
+  '/customers/': typeof CustomersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/customers': typeof CustomersRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/loans': typeof LoansRoute
   '/payments': typeof PaymentsRoute
+  '/portal': typeof PortalRouteWithChildren
   '/reminders': typeof RemindersRoute
   '/reports': typeof ReportsRoute
   '/settings': typeof SettingsRoute
+  '/support-tickets': typeof SupportTicketsRoute
   '/customers/add': typeof CustomersAddRoute
+  '/portal/activate-account': typeof PortalActivateAccountRoute
+  '/portal/dashboard': typeof PortalDashboardRoute
+  '/portal/documents': typeof PortalDocumentsRoute
+  '/portal/forgot-password': typeof PortalForgotPasswordRoute
+  '/portal/loan': typeof PortalLoanRoute
+  '/portal/login': typeof PortalLoginRoute
+  '/portal/payments': typeof PortalPaymentsRoute
+  '/portal/profile': typeof PortalProfileRoute
+  '/portal/settings': typeof PortalSettingsRoute
+  '/portal/signup': typeof PortalSignupRoute
+  '/portal/support': typeof PortalSupportRoute
+  '/customers': typeof CustomersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -94,10 +205,24 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/loans': typeof LoansRoute
   '/payments': typeof PaymentsRoute
+  '/portal': typeof PortalRouteWithChildren
   '/reminders': typeof RemindersRoute
   '/reports': typeof ReportsRoute
   '/settings': typeof SettingsRoute
+  '/support-tickets': typeof SupportTicketsRoute
   '/customers/add': typeof CustomersAddRoute
+  '/portal/activate-account': typeof PortalActivateAccountRoute
+  '/portal/dashboard': typeof PortalDashboardRoute
+  '/portal/documents': typeof PortalDocumentsRoute
+  '/portal/forgot-password': typeof PortalForgotPasswordRoute
+  '/portal/loan': typeof PortalLoanRoute
+  '/portal/login': typeof PortalLoginRoute
+  '/portal/payments': typeof PortalPaymentsRoute
+  '/portal/profile': typeof PortalProfileRoute
+  '/portal/settings': typeof PortalSettingsRoute
+  '/portal/signup': typeof PortalSignupRoute
+  '/portal/support': typeof PortalSupportRoute
+  '/customers/': typeof CustomersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -107,21 +232,48 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/loans'
     | '/payments'
+    | '/portal'
     | '/reminders'
     | '/reports'
     | '/settings'
+    | '/support-tickets'
     | '/customers/add'
+    | '/portal/activate-account'
+    | '/portal/dashboard'
+    | '/portal/documents'
+    | '/portal/forgot-password'
+    | '/portal/loan'
+    | '/portal/login'
+    | '/portal/payments'
+    | '/portal/profile'
+    | '/portal/settings'
+    | '/portal/signup'
+    | '/portal/support'
+    | '/customers/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/customers'
     | '/dashboard'
     | '/loans'
     | '/payments'
+    | '/portal'
     | '/reminders'
     | '/reports'
     | '/settings'
+    | '/support-tickets'
     | '/customers/add'
+    | '/portal/activate-account'
+    | '/portal/dashboard'
+    | '/portal/documents'
+    | '/portal/forgot-password'
+    | '/portal/loan'
+    | '/portal/login'
+    | '/portal/payments'
+    | '/portal/profile'
+    | '/portal/settings'
+    | '/portal/signup'
+    | '/portal/support'
+    | '/customers'
   id:
     | '__root__'
     | '/'
@@ -129,10 +281,24 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/loans'
     | '/payments'
+    | '/portal'
     | '/reminders'
     | '/reports'
     | '/settings'
+    | '/support-tickets'
     | '/customers/add'
+    | '/portal/activate-account'
+    | '/portal/dashboard'
+    | '/portal/documents'
+    | '/portal/forgot-password'
+    | '/portal/loan'
+    | '/portal/login'
+    | '/portal/payments'
+    | '/portal/profile'
+    | '/portal/settings'
+    | '/portal/signup'
+    | '/portal/support'
+    | '/customers/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -141,13 +307,22 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   LoansRoute: typeof LoansRoute
   PaymentsRoute: typeof PaymentsRoute
+  PortalRoute: typeof PortalRouteWithChildren
   RemindersRoute: typeof RemindersRoute
   ReportsRoute: typeof ReportsRoute
   SettingsRoute: typeof SettingsRoute
+  SupportTicketsRoute: typeof SupportTicketsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/support-tickets': {
+      id: '/support-tickets'
+      path: '/support-tickets'
+      fullPath: '/support-tickets'
+      preLoaderRoute: typeof SupportTicketsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -167,6 +342,13 @@ declare module '@tanstack/react-router' {
       path: '/reminders'
       fullPath: '/reminders'
       preLoaderRoute: typeof RemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/portal': {
+      id: '/portal'
+      path: '/portal'
+      fullPath: '/portal'
+      preLoaderRoute: typeof PortalRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/payments': {
@@ -204,6 +386,90 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/customers/': {
+      id: '/customers/'
+      path: '/'
+      fullPath: '/customers/'
+      preLoaderRoute: typeof CustomersIndexRouteImport
+      parentRoute: typeof CustomersRoute
+    }
+    '/portal/support': {
+      id: '/portal/support'
+      path: '/support'
+      fullPath: '/portal/support'
+      preLoaderRoute: typeof PortalSupportRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/signup': {
+      id: '/portal/signup'
+      path: '/signup'
+      fullPath: '/portal/signup'
+      preLoaderRoute: typeof PortalSignupRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/settings': {
+      id: '/portal/settings'
+      path: '/settings'
+      fullPath: '/portal/settings'
+      preLoaderRoute: typeof PortalSettingsRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/profile': {
+      id: '/portal/profile'
+      path: '/profile'
+      fullPath: '/portal/profile'
+      preLoaderRoute: typeof PortalProfileRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/payments': {
+      id: '/portal/payments'
+      path: '/payments'
+      fullPath: '/portal/payments'
+      preLoaderRoute: typeof PortalPaymentsRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/login': {
+      id: '/portal/login'
+      path: '/login'
+      fullPath: '/portal/login'
+      preLoaderRoute: typeof PortalLoginRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/loan': {
+      id: '/portal/loan'
+      path: '/loan'
+      fullPath: '/portal/loan'
+      preLoaderRoute: typeof PortalLoanRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/forgot-password': {
+      id: '/portal/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/portal/forgot-password'
+      preLoaderRoute: typeof PortalForgotPasswordRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/documents': {
+      id: '/portal/documents'
+      path: '/documents'
+      fullPath: '/portal/documents'
+      preLoaderRoute: typeof PortalDocumentsRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/dashboard': {
+      id: '/portal/dashboard'
+      path: '/dashboard'
+      fullPath: '/portal/dashboard'
+      preLoaderRoute: typeof PortalDashboardRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/activate-account': {
+      id: '/portal/activate-account'
+      path: '/activate-account'
+      fullPath: '/portal/activate-account'
+      preLoaderRoute: typeof PortalActivateAccountRouteImport
+      parentRoute: typeof PortalRoute
+    }
     '/customers/add': {
       id: '/customers/add'
       path: '/add'
@@ -216,15 +482,48 @@ declare module '@tanstack/react-router' {
 
 interface CustomersRouteChildren {
   CustomersAddRoute: typeof CustomersAddRoute
+  CustomersIndexRoute: typeof CustomersIndexRoute
 }
 
 const CustomersRouteChildren: CustomersRouteChildren = {
   CustomersAddRoute: CustomersAddRoute,
+  CustomersIndexRoute: CustomersIndexRoute,
 }
 
 const CustomersRouteWithChildren = CustomersRoute._addFileChildren(
   CustomersRouteChildren,
 )
+
+interface PortalRouteChildren {
+  PortalActivateAccountRoute: typeof PortalActivateAccountRoute
+  PortalDashboardRoute: typeof PortalDashboardRoute
+  PortalDocumentsRoute: typeof PortalDocumentsRoute
+  PortalForgotPasswordRoute: typeof PortalForgotPasswordRoute
+  PortalLoanRoute: typeof PortalLoanRoute
+  PortalLoginRoute: typeof PortalLoginRoute
+  PortalPaymentsRoute: typeof PortalPaymentsRoute
+  PortalProfileRoute: typeof PortalProfileRoute
+  PortalSettingsRoute: typeof PortalSettingsRoute
+  PortalSignupRoute: typeof PortalSignupRoute
+  PortalSupportRoute: typeof PortalSupportRoute
+}
+
+const PortalRouteChildren: PortalRouteChildren = {
+  PortalActivateAccountRoute: PortalActivateAccountRoute,
+  PortalDashboardRoute: PortalDashboardRoute,
+  PortalDocumentsRoute: PortalDocumentsRoute,
+  PortalForgotPasswordRoute: PortalForgotPasswordRoute,
+  PortalLoanRoute: PortalLoanRoute,
+  PortalLoginRoute: PortalLoginRoute,
+  PortalPaymentsRoute: PortalPaymentsRoute,
+  PortalProfileRoute: PortalProfileRoute,
+  PortalSettingsRoute: PortalSettingsRoute,
+  PortalSignupRoute: PortalSignupRoute,
+  PortalSupportRoute: PortalSupportRoute,
+}
+
+const PortalRouteWithChildren =
+  PortalRoute._addFileChildren(PortalRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -232,10 +531,22 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   LoansRoute: LoansRoute,
   PaymentsRoute: PaymentsRoute,
+  PortalRoute: PortalRouteWithChildren,
   RemindersRoute: RemindersRoute,
   ReportsRoute: ReportsRoute,
   SettingsRoute: SettingsRoute,
+  SupportTicketsRoute: SupportTicketsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

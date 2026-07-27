@@ -75,16 +75,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "GoldVault — Gold Loan Management System" },
+      { title: "Vyas Finance — Gold Loan Management System" },
       {
         name: "description",
         content:
-          "GoldVault is a clean, modern gold loan management system for small finance companies — customers, loans, payments, reminders and reports in one place.",
+          "Vyas Finance is a clean, modern gold loan management system for small finance companies — customers, loans, payments, reminders and reports in one place.",
       },
-      { property: "og:title", content: "GoldVault — Gold Loan Management System" },
+      { property: "og:title", content: "Vyas Finance — Gold Loan Management System" },
       {
         property: "og:description",
-        content: "Manage customers, gold loans, payments and reminders with GoldVault.",
+        content: "Manage customers, gold loans, payments and reminders with Vyas Finance.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
