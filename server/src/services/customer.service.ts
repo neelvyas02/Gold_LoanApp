@@ -9,28 +9,23 @@ export class CustomerService {
   static async getCustomers(search?: string, tab?: string) {
     const whereClause: any = {};
 
-    if (tab === "activated" || tab === "active") {
+    if (tab === "active" || tab === "active_loans" || tab === "activated") {
       whereClause.isArchived = false;
-      whereClause.isActive = true;
       whereClause.loans = {
         some: {
           status: { in: ["Active", "Due Soon", "Overdue"] },
         },
       };
-    } else if (tab === "deactivated" || tab === "archived") {
-      whereClause.OR = [
-        { isArchived: true },
-        { isActive: false },
-      ];
-    } else if (tab === "closed") {
+    } else if (tab === "closed" || tab === "closed_loans") {
       whereClause.isArchived = false;
-      whereClause.isActive = true;
       whereClause.loans = {
         every: {
           status: "Closed",
         },
         some: {},
       };
+    } else if (tab === "archived" || tab === "deactivated") {
+      whereClause.isArchived = true;
     }
 
     if (search && search.trim()) {

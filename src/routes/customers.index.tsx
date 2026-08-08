@@ -34,17 +34,17 @@ export const Route = createFileRoute("/customers/")({
 });
 
 function statusBadge(s: string) {
-  if (s === "Activated" || s === "Active") return "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 font-semibold";
+  if (s === "Active") return "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 font-semibold";
   if (s === "Due Soon") return "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 font-semibold";
   if (s === "Overdue") return "bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 font-semibold";
-  if (s === "Deactivated" || s === "Archived") return "bg-slate-500/15 text-slate-600 dark:text-slate-400 border border-slate-500/30 font-semibold";
+  if (s === "Archived") return "bg-slate-500/15 text-slate-600 dark:text-slate-400 border border-slate-500/30 font-semibold";
   if (s === "Closed") return "bg-gray-500/15 text-gray-600 dark:text-gray-400 border border-gray-500/30 font-semibold";
   return "bg-muted text-muted-foreground font-semibold";
 }
 
-function getDisplayStatus(r: any): "Activated" | "Due Soon" | "Overdue" | "Deactivated" | "Closed" {
-  if (r.isArchived || r.isActive === false) {
-    return "Deactivated";
+function getDisplayStatus(r: any): "Active" | "Due Soon" | "Overdue" | "Closed" | "Archived" {
+  if (r.isArchived) {
+    return "Archived";
   }
   const activeLoans = r.loans?.filter((l: any) => l.status !== "Closed") || [];
   if (activeLoans.some((l: any) => l.status === "Overdue")) {
@@ -54,13 +54,13 @@ function getDisplayStatus(r: any): "Activated" | "Due Soon" | "Overdue" | "Deact
     return "Due Soon";
   }
   if (activeLoans.length > 0) {
-    return "Activated";
+    return "Active";
   }
   const allClosed = r.loans && r.loans.length > 0 && r.loans.every((l: any) => l.status === "Closed");
   if (allClosed) {
     return "Closed";
   }
-  return "Activated";
+  return "Active";
 }
 
 function CustomersIndexPage() {
@@ -70,10 +70,10 @@ function CustomersIndexPage() {
   const customers = (Route.useLoaderData() as any[]) || [];
 
   // Filter Counts
-  const activatedCount = customers.filter(c => !c.isArchived && c.isActive !== false && c.loans?.some((l: any) => ["Active", "Due Soon", "Overdue"].includes(l.status))).length;
-  const deactivatedCount = customers.filter(c => c.isArchived || c.isActive === false).length;
-  const closedCount = customers.filter(c => !c.isArchived && c.isActive !== false && c.loans && c.loans.length > 0 && c.loans.every((l: any) => l.status === "Closed")).length;
   const allCount = customers.length;
+  const activeCount = customers.filter(c => !c.isArchived && c.loans?.some((l: any) => ["Active", "Due Soon", "Overdue"].includes(l.status))).length;
+  const closedCount = customers.filter(c => !c.isArchived && c.loans && c.loans.length > 0 && c.loans.every((l: any) => l.status === "Closed")).length;
+  const archivedCount = customers.filter(c => c.isArchived).length;
 
   // Detail Sheet States
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -206,25 +206,25 @@ function CustomersIndexPage() {
                 value="all"
                 className="h-8 rounded-lg px-3.5 text-xs font-semibold transition-all duration-200 cursor-pointer data-[state=active]:bg-card data-[state=active]:text-gold data-[state=active]:shadow-sm"
               >
-                ALL {allCount > 0 && `(${allCount})`}
+                All {allCount > 0 && `(${allCount})`}
               </TabsTrigger>
               <TabsTrigger
-                value="activated"
+                value="active"
                 className="h-8 rounded-lg px-3.5 text-xs font-semibold transition-all duration-200 cursor-pointer data-[state=active]:bg-card data-[state=active]:text-gold data-[state=active]:shadow-sm"
               >
-                ACTIVATED {activatedCount > 0 && `(${activatedCount})`}
-              </TabsTrigger>
-              <TabsTrigger
-                value="deactivated"
-                className="h-8 rounded-lg px-3.5 text-xs font-semibold transition-all duration-200 cursor-pointer data-[state=active]:bg-card data-[state=active]:text-gold data-[state=active]:shadow-sm"
-              >
-                DEACTIVATED {deactivatedCount > 0 && `(${deactivatedCount})`}
+                Active Loans {activeCount > 0 && `(${activeCount})`}
               </TabsTrigger>
               <TabsTrigger
                 value="closed"
                 className="h-8 rounded-lg px-3.5 text-xs font-semibold transition-all duration-200 cursor-pointer data-[state=active]:bg-card data-[state=active]:text-gold data-[state=active]:shadow-sm"
               >
-                CLOSED {closedCount > 0 && `(${closedCount})`}
+                Closed Loans {closedCount > 0 && `(${closedCount})`}
+              </TabsTrigger>
+              <TabsTrigger
+                value="archived"
+                className="h-8 rounded-lg px-3.5 text-xs font-semibold transition-all duration-200 cursor-pointer data-[state=active]:bg-card data-[state=active]:text-gold data-[state=active]:shadow-sm"
+              >
+                Archived {archivedCount > 0 && `(${archivedCount})`}
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -290,7 +290,7 @@ function CustomersIndexPage() {
                         >
                           Edit
                         </Button>
-                        {r.isArchived || r.isActive === false ? (
+                        {r.isArchived ? (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -318,21 +318,21 @@ function CustomersIndexPage() {
                             onClick={async () => {
                               if (
                                 confirm(
-                                  `Deactivate/Archive Customer ${r.name}?\n\nThis customer will be hidden from the active list but their records will be preserved.`
+                                  `Archive Customer ${r.name}?\n\nThis customer will be hidden from active lists but their records will be preserved.`
                                 )
                               ) {
                                 try {
                                   await ApiClient.archiveCustomer(r.id);
-                                  toast.success("Customer deactivated successfully!");
-                                  navigate({ search: (old) => ({ ...old, tab: "deactivated" }) });
+                                  toast.success("Customer archived successfully!");
+                                  navigate({ search: (old) => ({ ...old, tab: "archived" }) });
                                   router.invalidate();
                                 } catch (e: any) {
-                                  toast.error(e.message || "Failed to deactivate customer");
+                                  toast.error(e.message || "Failed to archive customer");
                                 }
                               }
                             }}
                           >
-                            Deactivate
+                            Archive
                           </Button>
                         )}
                       </TableCell>
@@ -342,13 +342,13 @@ function CustomersIndexPage() {
                 {customers.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={8} className="text-center py-12 text-muted-foreground font-medium">
-                      {activeTabValue === "deactivated"
-                        ? "No deactivated loans found."
-                        : activeTabValue === "activated"
-                        ? "No activated loans found."
+                      {activeTabValue === "archived"
+                        ? "No archived records found."
+                        : activeTabValue === "active"
+                        ? "No active loans found."
                         : activeTabValue === "closed"
                         ? "No closed loans found."
-                        : "No records found."}
+                        : "No customer records found."}
                     </TableCell>
                   </TableRow>
                 )}
@@ -392,7 +392,7 @@ function CustomersIndexPage() {
                   <div className="flex items-center justify-end gap-2 pt-1 border-t border-border/50">
                     <Button variant="ghost" size="sm" className="h-8 text-xs text-gold" onClick={() => handleOpenSheet(r.id, "view")}>View</Button>
                     <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => handleOpenSheet(r.id, "edit")}>Edit</Button>
-                    {r.isArchived || r.isActive === false ? (
+                    {r.isArchived ? (
                       <Button
                         variant="ghost"
                         size="sm"
@@ -418,19 +418,19 @@ function CustomersIndexPage() {
                         size="sm"
                         className="h-8 text-xs text-destructive"
                         onClick={async () => {
-                          if (confirm(`Deactivate/Archive Customer ${r.name}?`)) {
+                          if (confirm(`Archive Customer ${r.name}?`)) {
                             try {
                               await ApiClient.archiveCustomer(r.id);
-                              toast.success("Customer deactivated successfully!");
-                              navigate({ search: (old) => ({ ...old, tab: "deactivated" }) });
+                              toast.success("Customer archived successfully!");
+                              navigate({ search: (old) => ({ ...old, tab: "archived" }) });
                               router.invalidate();
                             } catch (e: any) {
-                              toast.error(e.message || "Failed to deactivate customer");
+                              toast.error(e.message || "Failed to archive customer");
                             }
                           }
                         }}
                       >
-                        Deactivate
+                        Archive
                       </Button>
                     )}
                   </div>
@@ -439,13 +439,13 @@ function CustomersIndexPage() {
             })}
             {customers.length === 0 && (
               <div className="text-center py-10 px-4 text-muted-foreground text-sm font-medium bg-muted/20 rounded-xl border border-border/60">
-                {activeTabValue === "deactivated"
-                  ? "No deactivated loans found."
-                  : activeTabValue === "activated"
-                  ? "No activated loans found."
+                {activeTabValue === "archived"
+                  ? "No archived records found."
+                  : activeTabValue === "active"
+                  ? "No active loans found."
                   : activeTabValue === "closed"
                   ? "No closed loans found."
-                  : "No records found."}
+                  : "No customer records found."}
               </div>
             )}
           </div>
