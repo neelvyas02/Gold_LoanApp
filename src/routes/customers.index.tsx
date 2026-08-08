@@ -13,7 +13,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { ApiClient } from "@/lib/api-client";
+import { ApiClient, getFileUrl } from "@/lib/api-client";
 
 export const Route = createFileRoute("/customers/")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -399,7 +399,7 @@ function CustomersIndexPage() {
                         {activeCustomer.documents.map((doc: any) => (
                           <a
                             key={doc.id}
-                            href={`http://localhost:5000${doc.filePath}`}
+                            href={getFileUrl(doc.filePath)}
                             target="_blank"
                             rel="noreferrer"
                             className="flex items-center gap-2.5 p-2.5 rounded-xl bg-muted/40 border border-border hover:bg-muted/70 transition-colors text-xs font-medium text-foreground"

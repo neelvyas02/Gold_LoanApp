@@ -1,5 +1,15 @@
 // API Client for communicating with the Express.js Backend of Vyas Finance
-const API_BASE_URL = "http://localhost:5000/api";
+export const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+
+export const SERVER_BASE_URL = API_BASE_URL.replace(/\/api\/?$/, "");
+
+export function getFileUrl(filePath?: string | null): string {
+  if (!filePath) return "";
+  if (filePath.startsWith("http://") || filePath.startsWith("https://")) return filePath;
+  const cleanPath = filePath.startsWith("/") ? filePath : `/${filePath}`;
+  return `${SERVER_BASE_URL}${cleanPath}`;
+}
 
 function getStorageItem(key: string): string | null {
   if (typeof window !== "undefined" && typeof localStorage !== "undefined") {

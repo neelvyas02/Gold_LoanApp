@@ -17,7 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ApiClient } from "@/lib/api-client";
+import { ApiClient, API_BASE_URL } from "@/lib/api-client";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/customers/add")({
@@ -230,7 +230,7 @@ function AddCustomerPage() {
       }
 
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:5000/api/uploads/document", {
+      const res = await fetch(`${API_BASE_URL}/uploads/document`, {
         method: "POST",
         body: uploadData,
         headers: {
@@ -291,7 +291,7 @@ function AddCustomerPage() {
       uploadData.append("ornament", file);
 
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:5000/api/uploads/ornament", {
+      const res = await fetch(`${API_BASE_URL}/uploads/ornament`, {
         method: "POST",
         body: uploadData,
         headers: {

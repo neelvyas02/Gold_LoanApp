@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ApiClient } from "@/lib/api-client";
+import { ApiClient, getFileUrl } from "@/lib/api-client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
@@ -39,7 +39,7 @@ function CustomerDocumentsPage() {
   };
 
   const handleDownloadFile = (filePath: string, fileName: string) => {
-    const url = `http://localhost:5000${filePath}`;
+    const url = getFileUrl(filePath);
     const link = document.createElement("a");
     link.href = url;
     link.target = "_blank";
@@ -101,7 +101,7 @@ function CustomerDocumentsPage() {
               <div className="flex gap-2 pt-4">
                 <Button
                   variant="outline"
-                  onClick={() => window.open(`http://localhost:5000${doc.filePath}`, "_blank")}
+                  onClick={() => window.open(getFileUrl(doc.filePath), "_blank")}
                   className="flex-1 rounded-lg text-xs h-8.5 border-border gap-1.5"
                 >
                   <Eye className="h-3.5 w-3.5" />

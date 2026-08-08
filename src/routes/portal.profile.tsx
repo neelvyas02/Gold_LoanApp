@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ApiClient } from "@/lib/api-client";
+import { ApiClient, API_BASE_URL, getFileUrl } from "@/lib/api-client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,7 +73,7 @@ function CustomerProfilePage() {
       uploadData.append("document", file);
 
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:5000/api/uploads/document", {
+      const res = await fetch(`${API_BASE_URL}/uploads/document`, {
         method: "POST",
         body: uploadData,
         headers: {
@@ -156,7 +156,7 @@ function CustomerProfilePage() {
           <div className="relative group">
             <div className="h-28 w-28 rounded-full bg-gold/10 border-2 border-gold/30 flex items-center justify-center font-bold text-gold text-3xl overflow-hidden shadow-md">
               {photoUrl ? (
-                <img src={`http://localhost:5000${photoUrl}`} alt={profile?.name} className="h-full w-full object-cover" />
+                <img src={getFileUrl(photoUrl)} alt={profile?.name} className="h-full w-full object-cover" />
               ) : (
                 profile?.name ? profile.name[0].toUpperCase() : "C"
               )}

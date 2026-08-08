@@ -2,7 +2,7 @@ import { createFileRoute, Outlet, useNavigate, useLocation } from "@tanstack/rea
 import { useEffect, useState } from "react";
 import { Gem, LayoutDashboard, ScrollText, IndianRupee, LifeBuoy, Settings, User, LogOut, Bell, Sun, Moon, Check, Trash2, X, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ApiClient } from "@/lib/api-client";
+import { ApiClient, getFileUrl } from "@/lib/api-client";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/portal")({
@@ -179,7 +179,7 @@ function PortalLayout() {
             <div className="flex items-center gap-3 px-3 py-2 rounded-xl mb-3">
               <div className="h-9 w-9 rounded-full bg-gold/10 border border-gold/20 flex items-center justify-center font-bold text-gold overflow-hidden shrink-0">
                 {user.profilePhoto ? (
-                  <img src={`http://localhost:5000${user.profilePhoto}`} alt={user.name} className="h-full w-full object-cover" />
+                  <img src={getFileUrl(user.profilePhoto)} alt={user.name} className="h-full w-full object-cover" />
                 ) : (
                   user.name ? user.name[0].toUpperCase() : "C"
                 )}

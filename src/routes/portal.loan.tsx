@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ApiClient } from "@/lib/api-client";
+import { ApiClient, getFileUrl } from "@/lib/api-client";
 import { downloadLoanAgreementPDF } from "@/lib/pdf-generator";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -284,11 +284,11 @@ function CustomerLoansPage() {
                           {o.photos.map((p: any) => (
                             <div 
                               key={p.id}
-                              onClick={() => setLightboxPhoto(`http://localhost:5000${p.filePath}`)}
+                              onClick={() => setLightboxPhoto(getFileUrl(p.filePath))}
                               className="h-12 w-12 rounded-lg overflow-hidden border border-border cursor-pointer hover:border-gold hover:shadow transition-all relative group"
                             >
                               <img 
-                                src={`http://localhost:5000${p.filePath}`} 
+                                src={getFileUrl(p.filePath)} 
                                 alt="Gold ornament" 
                                 className="h-full w-full object-cover transition-transform group-hover:scale-110" 
                               />
