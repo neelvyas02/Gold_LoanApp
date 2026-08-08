@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, useNavigate, useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Gem, LayoutDashboard, ScrollText, IndianRupee, LifeBuoy, Settings, User, LogOut, Bell, Sun, Moon, Check, Trash2, X, AlertCircle, Menu } from "lucide-react";
+import { Gem, LayoutDashboard, ScrollText, IndianRupee, LifeBuoy, Settings, User, LogOut, Bell, Sun, Moon, Check, Trash2, X, AlertCircle, Menu, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ApiClient, getFileUrl } from "@/lib/api-client";
 import { VFLogo } from "@/components/ui/vf-logo";
@@ -17,6 +17,7 @@ function PortalLayout() {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
   const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [authInitializing, setAuthInitializing] = useState(true);
   
   // Notification states
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -40,12 +41,16 @@ function PortalLayout() {
     } else {
       setToken(savedToken);
       if (savedUserStr) {
-        setUser(JSON.parse(savedUserStr));
+        try {
+          setUser(JSON.parse(savedUserStr));
+        } catch (e) {}
       }
       if (location.pathname === "/portal" || location.pathname === "/portal/") {
         navigate({ to: "/portal/dashboard" });
       }
     }
+
+    setAuthInitializing(false);
 
     // Read and apply theme
     const storedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
@@ -132,6 +137,19 @@ function PortalLayout() {
 
   if (isAuthPage) {
     return <Outlet />;
+  }
+
+  if (authInitializing) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+        <div className="text-center space-y-4 max-w-sm">
+          <VFLogo size="lg" className="mx-auto animate-pulse" />
+          <p className="text-xs font-semibold text-muted-foreground flex items-center justify-center gap-2">
+            <Loader2 className="h-4 w-4 text-gold animate-spin" /> Verifying session...
+          </p>
+        </div>
+      </div>
+    );
   }
 
   const menuItems = [

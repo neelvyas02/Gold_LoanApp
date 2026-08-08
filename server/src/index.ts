@@ -71,10 +71,12 @@ app.use("/api/customer-portal", customerPortalRouter); // Alias
 app.use("/api/admin", adminTicketsRouter);
 app.use("/api/admin/tickets", adminTicketsRouter); // Alias
 
-// Base route
-app.get("/health", (req, res) => {
-  res.json({ status: "healthy", timestamp: new Date() });
-});
+// Base route / Health Check (Lightweight endpoint for Render cold-start checks)
+const healthHandler = (req: express.Request, res: express.Response) => {
+  res.json({ status: "ok", timestamp: new Date().toISOString() });
+};
+app.get("/health", healthHandler);
+app.get("/api/health", healthHandler);
 
 // Global Error Handler
 app.use(errorMiddleware);

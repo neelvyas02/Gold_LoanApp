@@ -1,8 +1,39 @@
 // API Client for communicating with the Express.js Backend of Vyas Finance
-export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
-
+const RAW_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+export const API_BASE_URL = RAW_BASE.replace(/\/+$/, "");
 export const SERVER_BASE_URL = API_BASE_URL.replace(/\/api\/?$/, "");
+
+export type ConnectionState = "connected" | "connecting" | "failed";
+
+export interface ConnectionStatus {
+  state: ConnectionState;
+  message?: string;
+  attempt?: number;
+  maxAttempts?: number;
+}
+
+let currentConnectionStatus: ConnectionStatus = { state: "connected" };
+const connectionListeners = new Set<(status: ConnectionStatus) => void>();
+
+export function subscribeConnectionStatus(fn: (status: ConnectionStatus) => void) {
+  connectionListeners.add(fn);
+  fn(currentConnectionStatus);
+  return () => {
+    connectionListeners.delete(fn);
+  };
+}
+
+export function getConnectionStatus(): ConnectionStatus {
+  return currentConnectionStatus;
+}
+
+function setConnectionStatus(status: ConnectionStatus) {
+  currentConnectionStatus = status;
+  connectionListeners.forEach((fn) => fn(status));
+}
+
+const pendingGetRequests = new Map<string, Promise<any>>();
+const RETRY_DELAYS = [1000, 2000, 4000, 6000];
 
 export function getFileUrl(filePath?: string | null): string {
   if (!filePath) return "";
@@ -53,51 +84,152 @@ async function refreshTokenExchange(): Promise<string | null> {
   return null;
 }
 
-async function safeFetch<T>(endpoint: string, options?: RequestInit, isRetry = false): Promise<T> {
-  try {
-    const token = getStorageItem("token");
-    const isFormData = options?.body instanceof FormData;
-    
-    const headers: Record<string, string> = {
-      ...(token ? { "Authorization": `Bearer ${token}` } : {}),
-      ...(options?.headers as Record<string, string> || {}),
-    };
+async function performFetchWithRetry<T>(
+  endpoint: string,
+  options?: RequestInit,
+  isAuthRetry = false
+): Promise<T> {
+  const maxRetries = RETRY_DELAYS.length;
+  let lastError: any = null;
 
-    if (!isFormData && !headers["Content-Type"]) {
-      headers["Content-Type"] = "application/json";
-    }
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const token = getStorageItem("token");
+      const isFormData = options?.body instanceof FormData;
 
-    const res = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...options,
-      headers,
-    });
-    
-    if (res.status === 401 && !isRetry && endpoint !== "/customer/auth/login" && endpoint !== "/customer/auth/signup") {
-      // Attempt token refresh
-      const newToken = await refreshTokenExchange();
-      if (newToken) {
-        return safeFetch<T>(endpoint, options, true);
+      const headers: Record<string, string> = {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...((options?.headers as Record<string, string>) || {}),
+      };
+
+      if (!isFormData && !headers["Content-Type"]) {
+        headers["Content-Type"] = "application/json";
       }
-    }
 
-    if (!res.ok) {
-      const errPayload = await res.json().catch(() => ({}));
-      const errorObj: any = new Error(errPayload.message || `API error: ${res.statusText}`);
-      if (errPayload.errors) {
-        errorObj.errors = errPayload.errors;
+      const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+      const url = `${API_BASE_URL}${cleanEndpoint}`;
+
+      const res = await fetch(url, {
+        ...options,
+        headers,
+      });
+
+      if ([502, 503, 504].includes(res.status)) {
+        throw new Error(`Server temporarily unavailable (HTTP ${res.status})`);
       }
-      throw errorObj;
+
+      if (
+        res.status === 401 &&
+        !isAuthRetry &&
+        endpoint !== "/customer/auth/login" &&
+        endpoint !== "/customer/auth/signup" &&
+        endpoint !== "/auth/login"
+      ) {
+        const newToken = await refreshTokenExchange();
+        if (newToken) {
+          return performFetchWithRetry<T>(endpoint, options, true);
+        }
+      }
+
+      if (!res.ok) {
+        const errPayload = await res.json().catch(() => ({}));
+        const errorObj: any = new Error(
+          errPayload.message || `API error: ${res.statusText} (${res.status})`
+        );
+        errorObj.status = res.status;
+        if (errPayload.errors) {
+          errorObj.errors = errPayload.errors;
+        }
+        throw errorObj;
+      }
+
+      const payload = await res.json();
+
+      if (currentConnectionStatus.state !== "connected") {
+        setConnectionStatus({ state: "connected" });
+      }
+
+      return payload.data as T;
+    } catch (err: any) {
+      lastError = err;
+
+      const isNetworkOrColdStart =
+        !err.status ||
+        [502, 503, 504].includes(err.status) ||
+        err.message?.includes("Failed to fetch") ||
+        err.message?.includes("NetworkError") ||
+        err.message?.includes("Server temporarily unavailable");
+
+      if (!isNetworkOrColdStart || attempt >= maxRetries) {
+        if (isNetworkOrColdStart) {
+          setConnectionStatus({
+            state: "failed",
+            message: "Unable to connect to the Vyas Finance service. Please try again.",
+          });
+          const connectionErr: any = new Error(
+            "Unable to connect to the Vyas Finance service. Please try again."
+          );
+          connectionErr.isConnectionError = true;
+          connectionErr.originalError = err;
+          throw connectionErr;
+        }
+        throw err;
+      }
+
+      const nextDelay = RETRY_DELAYS[attempt];
+      setConnectionStatus({
+        state: "connecting",
+        message: "Connecting securely... Please wait while we reconnect to Vyas Finance.",
+        attempt: attempt + 1,
+        maxAttempts: maxRetries,
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, nextDelay));
     }
-    
-    const payload = await res.json();
-    return payload.data as T;
-  } catch (error) {
-    console.error(`Backend connection failed for endpoint ${endpoint}.`, error);
-    throw error;
   }
+
+  throw lastError;
+}
+
+async function safeFetch<T>(endpoint: string, options?: RequestInit, isRetry = false): Promise<T> {
+  const method = (options?.method || "GET").toUpperCase();
+  const isGet = method === "GET";
+
+  if (isGet) {
+    const key = `${endpoint}:${options?.headers ? JSON.stringify(options.headers) : ""}`;
+    if (pendingGetRequests.has(key)) {
+      return pendingGetRequests.get(key) as Promise<T>;
+    }
+    const promise = performFetchWithRetry<T>(endpoint, options, isRetry).finally(() => {
+      pendingGetRequests.delete(key);
+    });
+    pendingGetRequests.set(key, promise);
+    return promise;
+  }
+
+  return performFetchWithRetry<T>(endpoint, options, isRetry);
 }
 
 export const ApiClient = {
+  async checkHealth() {
+    try {
+      setConnectionStatus({ state: "connecting", message: "Reconnecting to Vyas Finance..." });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      const res = await fetch(`${API_BASE_URL}/health`, { signal: controller.signal });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        setConnectionStatus({ state: "connected" });
+        return true;
+      }
+    } catch (e) {
+      console.warn("Health check failed:", e);
+    }
+    setConnectionStatus({ state: "failed", message: "Unable to connect to the Vyas Finance service. Please try again." });
+    return false;
+  },
+
   // Admin Auth
   async login(credentials: any) {
     const data = await safeFetch<any>("/auth/login", {
