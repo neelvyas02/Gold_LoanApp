@@ -315,28 +315,14 @@ export const ApiClient = {
     });
   },
 
-  async customerForgotPassword(payload: { email: string; identifier?: string }) {
+  async customerForgotPassword(payload: { email?: string; identifier?: string }) {
     return safeFetch<any>("/customer/auth/forgot-password", {
       method: "POST",
       body: JSON.stringify(payload),
     });
   },
 
-  async customerResetPassword(payload: { email: string; otp: string; newPassword: string; confirmPassword?: string }) {
-    return safeFetch<any>("/customer/auth/reset-password", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
-  },
-
-  async customerForgotPassword(payload: { identifier: string }) {
-    return safeFetch<any>("/customer/auth/forgot-password", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
-  },
-
-  async customerResetPassword(payload: { identifier: string; otp: string; newPassword: string }) {
+  async customerResetPassword(payload: { email?: string; identifier?: string; otp: string; newPassword: string; confirmPassword?: string }) {
     return safeFetch<any>("/customer/auth/reset-password", {
       method: "POST",
       body: JSON.stringify(payload),

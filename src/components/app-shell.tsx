@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 import { ApiClient } from "@/lib/api-client";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { VFLogo } from "@/components/ui/vf-logo";
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -170,9 +171,7 @@ export function AppShell({
       {/* Sidebar */}
       <aside className="hidden lg:flex w-64 shrink-0 flex-col bg-card border-r border-border">
         <div className="h-16 flex items-center gap-3 px-6 border-b border-border">
-          <div className="h-9 w-9 rounded-lg bg-gold grid place-items-center">
-            <Gem className="h-4 w-4 text-gold-foreground" />
-          </div>
+          <VFLogo size="sm" />
           <div className="min-w-0">
             <p className="text-sm font-semibold leading-tight truncate text-foreground">Vyas Finance</p>
             <p className="text-[11px] text-muted-foreground leading-tight">Loan Management</p>
@@ -215,9 +214,7 @@ export function AppShell({
       <div className="flex-1 min-w-0 flex flex-col">
         <header className="h-16 bg-card border-b border-border flex items-center gap-4 px-4 md:px-8 relative z-50">
           <div className="lg:hidden flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-gold grid place-items-center">
-              <Gem className="h-4 w-4 text-gold-foreground" />
-            </div>
+            <VFLogo size="sm" />
             <span className="font-semibold text-foreground">Vyas Finance</span>
           </div>
 

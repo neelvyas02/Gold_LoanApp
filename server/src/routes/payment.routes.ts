@@ -4,12 +4,14 @@ import {
   createPayment,
   reversePayment,
 } from "../controllers/payment.controller.js";
-import { authMiddleware } from "../middleware/auth.middleware.js";
+import { authMiddleware, requireAdminOrEmployee } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
-router.get("/", authMiddleware, getPayments);
-router.post("/", authMiddleware, createPayment);
-router.patch("/:receiptNo/reverse", authMiddleware, reversePayment);
+router.use(authMiddleware, requireAdminOrEmployee);
+
+router.get("/", getPayments);
+router.post("/", createPayment);
+router.patch("/:receiptNo/reverse", reversePayment);
 
 export default router;

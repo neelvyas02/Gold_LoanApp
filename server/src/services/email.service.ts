@@ -1,4 +1,4 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
 export interface EmailOptions {
   to: string;
@@ -7,145 +7,144 @@ export interface EmailOptions {
   text?: string;
 }
 
-export interface EmailProviderStrategy {
-  sendEmail(options: EmailOptions): Promise<boolean>;
-}
+class ResendEmailService {
+  private resendClient: Resend | null = null;
 
-/**
- * Development & Production Gmail SMTP Provider via Nodemailer
- */
-class GmailEmailProvider implements EmailProviderStrategy {
-  private transporter: nodemailer.Transporter | null = null;
-
-  private getTransporter() {
-    if (!this.transporter) {
-      const host = process.env.SMTP_HOST || "smtp.gmail.com";
-      const port = parseInt(process.env.SMTP_PORT || "587", 10);
-      const user = process.env.SMTP_USER;
-      const pass = process.env.SMTP_PASS;
-
-      if (!user || !pass) {
-        console.warn("[EmailService] SMTP credentials not set. Falling back to console logging mode.");
-        return null;
-      }
-
-      this.transporter = nodemailer.createTransport({
-        host,
-        port,
-        secure: port === 465,
-        auth: { user, pass },
-      });
+  private getClient(): Resend {
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey || !apiKey.trim()) {
+      throw new Error("[EmailService] Missing RESEND_API_KEY environment variable. Email dispatch requires a valid Resend API key.");
     }
-    return this.transporter;
+    if (!this.resendClient) {
+      this.resendClient = new Resend(apiKey.trim());
+    }
+    return this.resendClient;
   }
 
-  async sendEmail(options: EmailOptions): Promise<boolean> {
-    const transporter = this.getTransporter();
-    const fromUser = process.env.SMTP_USER || "noreply@vyasfinance.com";
-    const fromName = "Vyas Finance";
+  private getFromAddress(): string {
+    return process.env.EMAIL_FROM || "Vyas Finance <otp@neelvyas.me>";
+  }
 
-    if (!transporter) {
-      console.log(`\n================ EMAIL DISPATCH (DEV SIMULATION) ================`);
-      console.log(`To: ${options.to}`);
-      console.log(`Subject: ${options.subject}`);
-      console.log(`Body (HTML):\n${options.html}`);
-      console.log(`=================================================================\n`);
-      return true;
-    }
-
+  /**
+   * Core email sending handler using Resend SDK
+   */
+  async sendEmail(options: EmailOptions): Promise<{ success: boolean; messageId?: string; error?: string }> {
     try {
-      await transporter.sendMail({
-        from: `"${fromName}" <${fromUser}>`,
-        to: options.to,
+      const resend = this.getClient();
+      const from = this.getFromAddress();
+
+      console.log(`[Resend] Dispatching email to: ${options.to} | Subject: ${options.subject} | From: ${from}`);
+
+      const { data, error } = await resend.emails.send({
+        from,
+        to: [options.to],
         subject: options.subject,
         html: options.html,
         text: options.text || options.html.replace(/<[^>]*>?/gm, ""),
       });
-      return true;
-    } catch (error) {
-      console.error("[GmailEmailProvider] Failed to send email:", error);
-      // Fallback console log in case of SMTP failure during dev
-      console.log(`\n[FALLBACK CONSOLE DISPATCH] To: ${options.to} | Subject: ${options.subject}`);
-      return false;
-    }
-  }
-}
 
-/**
- * Extensible Provider Factory supporting Brevo, SendGrid, Amazon SES, Outlook
- */
-class ModularEmailService {
-  private getProvider(): EmailProviderStrategy {
-    const provider = (process.env.EMAIL_PROVIDER || "gmail").toLowerCase();
-    switch (provider) {
-      case "gmail":
-      default:
-        return new GmailEmailProvider();
-      // Future providers (Brevo, SendGrid, SES, Outlook) can be wired here seamlessly
+      if (error) {
+        console.error(`[Resend Error] API returned error:`, error);
+        return { success: false, error: error.message };
+      }
+
+      console.log(`[Resend Success] Email delivered. Resend Message ID: ${data?.id}`);
+      return { success: true, messageId: data?.id };
+    } catch (err: any) {
+      console.error("[Resend Exception] Failed to dispatch email:", err.message || err);
+      throw err;
     }
   }
 
-  async sendOTPEmail(email: string, otp: string, customerName: string = "Customer"): Promise<boolean> {
+  /**
+   * Account Activation OTP Email
+   */
+  async sendOTPEmail(email: string, otp: string, customerName: string = "Customer"): Promise<{ success: boolean; messageId?: string }> {
     const subject = "Vyas Finance Account Verification";
+    const textBody = `Hello ${customerName},\n\nYour One-Time Password (OTP) for Vyas Finance is:\n\n${otp}\n\nThis OTP is valid for 10 minutes.\n\nDo not share this OTP with anyone.\n\nRegards,\nVyas Finance`;
+
     const html = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
-        <div style="text-align: center; margin-bottom: 20px;">
-          <h2 style="color: #b8860b; margin: 0; font-size: 24px; font-weight: 700;">Vyas Finance</h2>
-          <p style="color: #64748b; font-size: 14px; margin-top: 4px;">Gold Loan Management System</p>
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 28px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <h2 style="color: #b8860b; margin: 0; font-size: 26px; font-weight: 700;">Vyas Finance</h2>
+          <p style="color: #64748b; font-size: 14px; margin-top: 4px;">Account Verification</p>
         </div>
         <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
         <p style="color: #334155; font-size: 15px; margin-bottom: 12px;">Hello <strong>${customerName}</strong>,</p>
-        <p style="color: #334155; font-size: 15px; line-height: 1.5;">Your One-Time Password (OTP) for account verification is:</p>
-        <div style="background-color: #f8fafc; border: 2px dashed #cbd5e1; padding: 18px; text-align: center; border-radius: 8px; font-size: 28px; font-weight: bold; letter-spacing: 6px; color: #1e293b; margin: 20px 0;">
+        <p style="color: #334155; font-size: 15px; line-height: 1.5;">Your One-Time Password (OTP) for Vyas Finance is:</p>
+        <div style="background-color: #f8fafc; border: 2px dashed #cbd5e1; padding: 20px; text-align: center; border-radius: 10px; font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #1e293b; margin: 24px 0;">
           ${otp}
         </div>
-        <p style="color: #64748b; font-size: 13px; line-height: 1.5;">This OTP is valid for <strong>10 minutes</strong>. Do not share this OTP with anyone for security reasons.</p>
+        <p style="color: #64748b; font-size: 13px; line-height: 1.5;">This OTP is valid for <strong>10 minutes</strong>.</p>
+        <p style="color: #64748b; font-size: 13px; line-height: 1.5;">Do not share this OTP with anyone.</p>
         <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0 16px 0;" />
-        <p style="color: #94a3b8; font-size: 12px; margin: 0; text-align: center;">Regards,<br /><strong style="color: #64748b;">Vyas Finance Team</strong></p>
+        <p style="color: #94a3b8; font-size: 12px; margin: 0; text-align: center;">Regards,<br /><strong style="color: #64748b;">Vyas Finance</strong></p>
       </div>
     `;
 
-    return this.getProvider().sendEmail({ to: email, subject, html });
+    const result = await this.sendEmail({ to: email, subject, html, text: textBody });
+    if (!result.success) {
+      throw new Error(`Failed to deliver OTP email: ${result.error || "Unknown Resend error"}`);
+    }
+    return { success: true, messageId: result.messageId };
   }
 
-  async sendPasswordResetEmail(email: string, otp: string, customerName: string = "Customer"): Promise<boolean> {
+  /**
+   * Password Reset OTP Email
+   */
+  async sendPasswordResetEmail(email: string, otp: string, customerName: string = "Customer"): Promise<{ success: boolean; messageId?: string }> {
     const subject = "Vyas Finance Password Reset OTP";
+    const textBody = `Hello ${customerName},\n\nYour Password Reset One-Time Password (OTP) for Vyas Finance is:\n\n${otp}\n\nThis OTP is valid for 10 minutes.\n\nDo not share this OTP with anyone.\n\nRegards,\nVyas Finance`;
+
     const html = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
-        <div style="text-align: center; margin-bottom: 20px;">
-          <h2 style="color: #b8860b; margin: 0; font-size: 24px; font-weight: 700;">Vyas Finance</h2>
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 28px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <h2 style="color: #b8860b; margin: 0; font-size: 26px; font-weight: 700;">Vyas Finance</h2>
           <p style="color: #64748b; font-size: 14px; margin-top: 4px;">Password Reset Request</p>
         </div>
         <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
         <p style="color: #334155; font-size: 15px; margin-bottom: 12px;">Hello <strong>${customerName}</strong>,</p>
-        <p style="color: #334155; font-size: 15px;">Your Password Reset OTP is:</p>
-        <div style="background-color: #f8fafc; border: 2px dashed #cbd5e1; padding: 18px; text-align: center; border-radius: 8px; font-size: 28px; font-weight: bold; letter-spacing: 6px; color: #1e293b; margin: 20px 0;">
+        <p style="color: #334155; font-size: 15px; line-height: 1.5;">Your Password Reset One-Time Password (OTP) for Vyas Finance is:</p>
+        <div style="background-color: #f8fafc; border: 2px dashed #cbd5e1; padding: 20px; text-align: center; border-radius: 10px; font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #1e293b; margin: 24px 0;">
           ${otp}
         </div>
-        <p style="color: #64748b; font-size: 13px;">This OTP is valid for <strong>10 minutes</strong>. If you did not request a password reset, please contact your branch immediately.</p>
+        <p style="color: #64748b; font-size: 13px; line-height: 1.5;">This OTP is valid for <strong>10 minutes</strong>.</p>
+        <p style="color: #64748b; font-size: 13px; line-height: 1.5;">Do not share this OTP with anyone.</p>
         <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0 16px 0;" />
-        <p style="color: #94a3b8; font-size: 12px; margin: 0; text-align: center;">Regards,<br /><strong style="color: #64748b;">Vyas Finance Team</strong></p>
+        <p style="color: #94a3b8; font-size: 12px; margin: 0; text-align: center;">Regards,<br /><strong style="color: #64748b;">Vyas Finance</strong></p>
       </div>
     `;
 
-    return this.getProvider().sendEmail({ to: email, subject, html });
+    const result = await this.sendEmail({ to: email, subject, html, text: textBody });
+    if (!result.success) {
+      throw new Error(`Failed to deliver password reset OTP email: ${result.error || "Unknown Resend error"}`);
+    }
+    return { success: true, messageId: result.messageId };
   }
 
+  /**
+   * Welcome Email after successful account activation
+   */
   async sendWelcomeEmail(email: string, customerName: string): Promise<boolean> {
     const subject = "Welcome to Vyas Finance Customer Portal!";
     const html = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 28px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
         <h2 style="color: #b8860b;">Vyas Finance</h2>
         <p>Dear <strong>${customerName}</strong>,</p>
         <p>Your Vyas Finance customer portal account has been successfully activated.</p>
-        <p>You can now log in using your registered email address or mobile number and view your active loans, payment history, and support options.</p>
+        <p>You can now log in using your registered email address or mobile number to view active loans, payment receipts, and customer support services.</p>
         <br />
         <p>Regards,<br /><strong>Vyas Finance Team</strong></p>
       </div>
     `;
 
-    return this.getProvider().sendEmail({ to: email, subject, html });
+    try {
+      const res = await this.sendEmail({ to: email, subject, html });
+      return res.success;
+    } catch {
+      return false;
+    }
   }
 }
 
-export const EmailService = new ModularEmailService();
+export const EmailService = new ResendEmailService();

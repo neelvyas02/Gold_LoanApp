@@ -22,12 +22,15 @@ export const otpRateLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  validate: {
+    keyGeneratorIpFallback: false,
+    xForwardedForHeader: false,
+  },
   keyGenerator: (req) => {
     const email = req.body?.email || req.body?.identifier;
-    if (email && typeof email === "string") {
+    if (email && typeof email === "string" && email.trim()) {
       return `otp_${email.toLowerCase().trim()}`;
     }
-    const rawIp = req.ip || req.socket.remoteAddress || "127.0.0.1";
-    return rawIp;
+    return req.ip || req.socket.remoteAddress || "127.0.0.1";
   },
 });

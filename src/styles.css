@@ -142,3 +142,63 @@
     -webkit-font-smoothing: antialiased;
   }
 }
+
+/* -------------------------------------------------------------
+   HYPER-REALISTIC 3D ANIMATED VF MONOGRAM LOGO STYLES
+   ------------------------------------------------------------- */
+@keyframes vfFloat {
+  0%, 100% {
+    transform: translateY(0px) rotateX(0deg) rotateY(0deg) scale(1);
+    filter: drop-shadow(0 15px 25px rgba(212, 175, 55, 0.25));
+  }
+  50% {
+    transform: translateY(-8px) rotateX(4deg) rotateY(-3deg) scale(1.02);
+    filter: drop-shadow(0 25px 35px rgba(245, 208, 97, 0.45));
+  }
+}
+
+@keyframes vfRimPulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes vfShineSweep {
+  0% {
+    transform: translateX(-150%) skewX(-25deg);
+  }
+  20%, 100% {
+    transform: translateX(250%) skewX(-25deg);
+  }
+}
+
+@keyframes vfAuraRotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-vf-float {
+  animation: vfFloat 6s ease-in-out infinite;
+}
+
+.animate-vf-rim-pulse {
+  animation: vfRimPulse 4s ease-in-out infinite;
+}
+
+.animate-vf-shine-sweep {
+  animation: vfShineSweep 4.5s ease-in-out infinite;
+}
+
+.animate-vf-aura-rotate {
+  animation: vfAuraRotate 20s linear infinite;
+}
+

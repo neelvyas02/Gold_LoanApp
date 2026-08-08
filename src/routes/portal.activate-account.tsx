@@ -40,6 +40,18 @@ function CustomerActivationPage() {
     general?: string;
   }>({});
 
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  useEffect(() => {
+    let timer: any;
+    if (resendCooldown > 0) {
+      timer = setInterval(() => {
+        setResendCooldown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
@@ -49,8 +61,8 @@ function CustomerActivationPage() {
   }, [navigate]);
 
   // Step 1: Send Activation OTP
-  async function handleSendOtp(e: FormEvent) {
-    e.preventDefault();
+  async function handleSendOtp(e?: FormEvent) {
+    if (e) e.preventDefault();
     setErrors({});
 
     const cleanEmail = email.trim();
@@ -75,6 +87,7 @@ function CustomerActivationPage() {
       }
       toast.success(res.message || "An OTP has been sent to your registered email address.");
       setStep("VERIFY_AND_SET_PASSWORD");
+      setResendCooldown(60);
     } catch (err: any) {
       const msg = err.message || "No customer found with this email address. Please enter the email registered by your branch.";
       setErrors({ general: msg });
@@ -331,14 +344,25 @@ function CustomerActivationPage() {
                   {loading ? "Activating Account..." : "Activate Account & Login"}
                 </Button>
 
-                <button
-                  type="button"
-                  onClick={() => setStep("ENTER_EMAIL")}
-                  className="w-full text-xs font-semibold text-muted-foreground hover:text-gold cursor-pointer text-center py-2"
-                  disabled={loading}
-                >
-                  ← Change Email Address
-                </button>
+                <div className="flex items-center justify-between text-xs pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setStep("ENTER_EMAIL")}
+                    className="font-semibold text-muted-foreground hover:text-gold cursor-pointer"
+                    disabled={loading}
+                  >
+                    ← Change Email Address
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleSendOtp()}
+                    disabled={loading || resendCooldown > 0}
+                    className="font-semibold text-gold hover:underline cursor-pointer disabled:opacity-50"
+                  >
+                    {resendCooldown > 0 ? `Resend OTP in ${resendCooldown}s` : "Resend OTP"}
+                  </button>
+                </div>
               </div>
             </form>
           )}

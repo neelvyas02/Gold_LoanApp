@@ -7,15 +7,17 @@ import {
   archiveCustomer,
   restoreCustomer,
 } from "../controllers/customer.controller.js";
-import { authMiddleware } from "../middleware/auth.middleware.js";
+import { authMiddleware, requireAdminOrEmployee } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
-router.get("/", authMiddleware, getCustomers);
-router.get("/:id", authMiddleware, getCustomerById);
-router.post("/", authMiddleware, createCustomer);
-router.put("/:id", authMiddleware, updateCustomer);
-router.patch("/:id/archive", authMiddleware, archiveCustomer);
-router.patch("/:id/restore", authMiddleware, restoreCustomer);
+router.use(authMiddleware, requireAdminOrEmployee);
+
+router.get("/", getCustomers);
+router.get("/:id", getCustomerById);
+router.post("/", createCustomer);
+router.put("/:id", updateCustomer);
+router.patch("/:id/archive", archiveCustomer);
+router.patch("/:id/restore", restoreCustomer);
 
 export default router;

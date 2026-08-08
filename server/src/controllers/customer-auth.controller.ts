@@ -39,7 +39,6 @@ export const CustomerAuthController = {
   async sendActivationOtp(req: Request, res: Response, next: NextFunction) {
     try {
       const { email, identifier, mobile } = req.body;
-
       const targetEmail = (email || identifier || "").trim();
 
       if (!targetEmail) {
@@ -61,16 +60,16 @@ export const CustomerAuthController = {
         },
       });
 
-      // Case 1: Email Not Found
+      // CASE A: Email Not Found
       if (!customer) {
         res.status(404).json({
           success: false,
-          message: "No customer found with this email address. Please enter the email registered by your branch.",
+          message: "No customer found with this email address. Please enter the email address registered by your branch or contact your branch for assistance.",
         });
         return;
       }
 
-      // Case 2: Customer Account Disabled / Inactive
+      // Customer Account Disabled / Inactive
       if (customer.isActive === false) {
         res.status(403).json({
           success: false,
@@ -79,7 +78,7 @@ export const CustomerAuthController = {
         return;
       }
 
-      // Case 3: Account Already Activated
+      // CASE B: Account Already Activated
       if (customer.isActivated === true) {
         res.status(400).json({
           success: false,
@@ -88,7 +87,7 @@ export const CustomerAuthController = {
         return;
       }
 
-      // Case 4: Valid Customer -> Generate OTP, Hash OTP, Save, Send Email
+      // CASE C: Valid Customer -> Generate OTP, Hash OTP, Save to DB, Dispatch Resend Email TO customer
       const otp = await OTPService.generateAndStoreOTP(customer.id, customer.email, "ACTIVATE");
       await EmailService.sendOTPEmail(customer.email, otp, customer.name);
 
@@ -102,7 +101,11 @@ export const CustomerAuthController = {
           email: customer.email,
         },
       });
-    } catch (error) {
+    } catch (error: any) {
+      if (error.message && error.message.includes("Please wait")) {
+        res.status(429).json({ success: false, message: error.message });
+        return;
+      }
       next(error);
     }
   },
@@ -121,14 +124,14 @@ export const CustomerAuthController = {
         return;
       }
 
-      const otpPurpose = (purpose || "ACTIVATE") as "ACTIVATE" | "RESET_PASSWORD" | "LOGIN";
+      const otpPurpose = (purpose || "ACTIVATE") as "ACTIVATE" | "RESET_PASSWORD";
       const result = await OTPService.verifyOTP(email.trim(), otp.trim(), otpPurpose);
 
       await recordAuditLog("AUTH", "OTP_VERIFIED", `OTP verified for email ${email}`, result.customerId, "Customer", req);
 
       res.json({
         success: true,
-        message: "Verified",
+        message: "OTP verified successfully.",
       });
     } catch (error: any) {
       res.status(400).json({
@@ -184,7 +187,7 @@ export const CustomerAuthController = {
         return;
       }
 
-      // If OTP is provided, verify it first
+      // If OTP is provided, verify it first against ACTIVATE purpose
       if (otp) {
         await OTPService.verifyOTP(customer.email, otp.trim(), "ACTIVATE");
       }
@@ -192,7 +195,7 @@ export const CustomerAuthController = {
       // Hash password using bcrypt
       const passwordHash = await bcrypt.hash(password, 10);
 
-      // Update Customer table
+      // Update Customer table in DB
       const updatedCustomer = await prisma.customer.update({
         where: { id: customer.id },
         data: {
@@ -217,9 +220,19 @@ export const CustomerAuthController = {
         },
       });
 
+      // Invalidate any remaining activation OTPs
+      await prisma.emailOTP.updateMany({
+        where: {
+          customerId: customer.id,
+          purpose: "ACTIVATE",
+          verified: false,
+        },
+        data: { verified: true },
+      });
+
       await recordAuditLog("AUTH", "ACCOUNT_ACTIVATED", `Account activated for customer ${customer.email}`, customer.id, "Customer", req);
 
-      // Send Welcome Email asynchronously
+      // Send Welcome Email asynchronously via Resend
       EmailService.sendWelcomeEmail(customer.email, customer.name).catch(console.error);
 
       // Generate JWT Access & Refresh Tokens
@@ -391,7 +404,11 @@ export const CustomerAuthController = {
           email: customer.email,
         },
       });
-    } catch (error) {
+    } catch (error: any) {
+      if (error.message && error.message.includes("Please wait")) {
+        res.status(429).json({ success: false, message: error.message });
+        return;
+      }
       next(error);
     }
   },
@@ -407,7 +424,7 @@ export const CustomerAuthController = {
       const targetEmail = (email || identifier || "").trim();
 
       if (!targetEmail || !otp || !newPassword) {
-        res.status(400).json({ success: false, message: "Email, OTP, and new password are required." });
+        res.status(400).json({ success: false, message: "Email/Identifier, OTP, and new password are required." });
         return;
       }
 
@@ -437,7 +454,7 @@ export const CustomerAuthController = {
         return;
       }
 
-      // Verify OTP code
+      // Verify OTP code specifically for RESET_PASSWORD purpose
       await OTPService.verifyOTP(customer.email, otp.trim(), "RESET_PASSWORD");
 
       // Hash new password
@@ -447,6 +464,30 @@ export const CustomerAuthController = {
       await prisma.customer.update({
         where: { id: customer.id },
         data: { passwordHash },
+      });
+
+      // Also sync CustomerAuth table
+      await prisma.customerAuth.upsert({
+        where: { customerId: customer.id },
+        create: {
+          customerId: customer.id,
+          passwordHash,
+          isActivated: true,
+          isActive: true,
+        },
+        update: {
+          passwordHash,
+        },
+      });
+
+      // Invalidate any remaining reset OTPs
+      await prisma.emailOTP.updateMany({
+        where: {
+          customerId: customer.id,
+          purpose: "RESET_PASSWORD",
+          verified: false,
+        },
+        data: { verified: true },
       });
 
       await recordAuditLog("AUTH", "PASSWORD_RESET", `Password reset successfully for ${customer.email}`, customer.id, "Customer", req);

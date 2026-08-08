@@ -395,8 +395,37 @@ function AddCustomerPage() {
         newErrors.rate = "Interest Rate cannot be negative.";
       }
 
+      if (formData.alternateMobile && formData.alternateMobile.trim() !== "") {
+        if (!/^\d{10}$/.test(formData.alternateMobile.trim())) {
+          newErrors.alternateMobile = "Alternate Phone must be 10 digits.";
+        } else if (formData.alternateMobile.trim() === formData.mobile.trim()) {
+          newErrors.alternateMobile = "Primary and alternate phone numbers cannot be identical.";
+        }
+      }
+
+      if (!formData.dob) {
+        newErrors.dob = "Date of Birth is required.";
+      } else {
+        const dobDate = new Date(formData.dob);
+        const today = new Date();
+        if (dobDate > today) {
+          newErrors.dob = "Date of Birth cannot be in the future.";
+        }
+      }
+
       if (!formData.loanClosingDate) {
         newErrors.loanClosingDate = "Loan Closing Date is required.";
+      } else {
+        const loanDate = new Date(formData.loanDate);
+        const closingDate = new Date(formData.loanClosingDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (closingDate < loanDate) {
+          newErrors.loanClosingDate = "Closing Date cannot be earlier than Loan Date.";
+        } else if (closingDate < today) {
+          newErrors.loanClosingDate = "Closing Date cannot be in the past.";
+        }
       }
 
       ornaments.forEach((o, index) => {
@@ -516,8 +545,8 @@ function AddCustomerPage() {
           </Button>
           <Button
             onClick={handleSave}
-            disabled={!isFormValid || submitting}
-            className="bg-gold text-gold-foreground hover:bg-gold/90 shadow-[var(--shadow-gold)] min-w-[140px] disabled:opacity-50 cursor-pointer"
+            disabled={submitting}
+            className="bg-gold text-gold-foreground hover:bg-gold/90 shadow-[var(--shadow-gold)] min-w-[140px] cursor-pointer"
           >
             {submitting ? (
               <>
@@ -682,7 +711,7 @@ function AddCustomerPage() {
                     <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
                       isUploaded ? "bg-emerald-600/20 text-emerald-700 dark:text-emerald-300" : "bg-destructive/20 text-destructive"
                     }`}>
-                      {isUploaded ? `${docInfo.fileName} ✓` : "No file uploaded"}
+                      {isUploaded ? `${docInfo?.fileName || "Uploaded"} ✓` : "No file uploaded"}
                     </span>
                   </div>
 

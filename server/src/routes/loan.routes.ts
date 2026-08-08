@@ -5,13 +5,15 @@ import {
   createLoan,
   closeLoan,
 } from "../controllers/loan.controller.js";
-import { authMiddleware } from "../middleware/auth.middleware.js";
+import { authMiddleware, requireAdminOrEmployee } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
-router.get("/", authMiddleware, getLoans);
-router.get("/:loanNo", authMiddleware, getLoanByNo);
-router.post("/", authMiddleware, createLoan);
-router.patch("/:loanNo/close", authMiddleware, closeLoan);
+router.use(authMiddleware, requireAdminOrEmployee);
+
+router.get("/", getLoans);
+router.get("/:loanNo", getLoanByNo);
+router.post("/", createLoan);
+router.patch("/:loanNo/close", closeLoan);
 
 export default router;
