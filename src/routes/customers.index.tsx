@@ -256,18 +256,18 @@ function CustomersIndexPage() {
           className="animate-in fade-in-50 slide-in-from-bottom-1 duration-300 ease-out"
         >
           {/* Desktop Table View */}
-          <div className="hidden md:block overflow-x-auto -mx-4 md:-mx-6">
-            <Table>
+          <div className="hidden md:block overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
+            <Table className="w-full min-w-[950px]">
               <TableHeader>
-                <TableRow className="hover:bg-transparent border-border">
-                  <TableHead className="pl-4 md:pl-6">Customer No.</TableHead>
-                  <TableHead>Customer Name</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Loan Number</TableHead>
-                  <TableHead className="text-right">Loan Amount</TableHead>
-                  <TableHead className="text-right">Outstanding Balance</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
-                  <TableHead className="text-right pr-4 md:pr-6">Actions</TableHead>
+                <TableRow className="hover:bg-transparent border-border bg-muted/30">
+                  <TableHead className="w-[110px] pl-4 md:pl-6 font-semibold">Customer No.</TableHead>
+                  <TableHead className="min-w-[140px] font-semibold">Customer Name</TableHead>
+                  <TableHead className="w-[120px] font-semibold">Phone</TableHead>
+                  <TableHead className="w-[120px] font-semibold">Loan Number</TableHead>
+                  <TableHead className="text-right w-[110px] font-semibold">Loan Amount</TableHead>
+                  <TableHead className="text-right w-[120px] font-semibold">Balance</TableHead>
+                  <TableHead className="text-center w-[100px] font-semibold">Status</TableHead>
+                  <TableHead className="text-right w-[240px] pr-4 md:pr-6 font-semibold">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -279,10 +279,10 @@ function CustomersIndexPage() {
 
                   return (
                     <TableRow key={r.id} className="hover:bg-muted/40 border-border">
-                      <TableCell className="pl-4 md:pl-6 font-mono text-xs text-muted-foreground">{r.customerNumber}</TableCell>
-                      <TableCell className="font-semibold text-foreground truncate max-w-[180px]">{r.name}</TableCell>
+                      <TableCell className="pl-4 md:pl-6 font-mono text-xs text-muted-foreground whitespace-nowrap">{r.customerNumber}</TableCell>
+                      <TableCell className="font-semibold text-foreground truncate max-w-[160px]" title={r.name}>{r.name}</TableCell>
                       <TableCell className="text-muted-foreground text-xs whitespace-nowrap">{r.phone}</TableCell>
-                      <TableCell className="font-mono text-xs text-muted-foreground">
+                      <TableCell className="font-mono text-xs text-muted-foreground whitespace-nowrap">
                         {primaryLoan?.loanNumber || "-"}
                       </TableCell>
                       <TableCell className="text-right font-mono text-xs font-semibold text-foreground whitespace-nowrap">
@@ -291,81 +291,85 @@ function CustomersIndexPage() {
                       <TableCell className="text-right font-mono text-xs font-semibold text-foreground whitespace-nowrap">
                         {primaryLoan ? `₹${balance.toLocaleString("en-IN")}` : "-"}
                       </TableCell>
-                      <TableCell className="text-center">
+                      <TableCell className="text-center whitespace-nowrap">
                         <Badge className={statusBadge(status)}>{status}</Badge>
                       </TableCell>
-                      <TableCell className="text-right pr-4 md:pr-6 space-x-1 whitespace-nowrap">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-[color:var(--gold)]"
-                          onClick={() => handleOpenSheet(r.id, "view")}
-                        >
-                          View
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleOpenSheet(r.id, "edit")}
-                        >
-                          Edit
-                        </Button>
-                        {r.isArchived ? (
+                      <TableCell className="text-right pr-4 md:pr-6 py-2.5">
+                        <div className="flex flex-wrap items-center justify-end gap-1 min-w-[210px]">
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-emerald-600 dark:text-emerald-400 cursor-pointer"
-                            onClick={async () => {
-                              if (confirm(`Are you sure you want to restore customer ${r.name}?`)) {
-                                try {
-                                  await ApiClient.restoreCustomer(r.id);
-                                  toast.success("Customer restored successfully!");
-                                  navigate({ search: (old) => ({ ...old, tab: "all" }) });
-                                  router.invalidate();
-                                } catch (e: any) {
-                                  toast.error(e.message || "Failed to restore customer");
-                                }
-                              }
-                            }}
+                            className="h-7 px-2 text-xs font-semibold text-gold hover:bg-gold/10 cursor-pointer"
+                            onClick={() => handleOpenSheet(r.id, "view")}
                           >
-                            Restore
+                            View
                           </Button>
-                        ) : (
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-destructive cursor-pointer"
-                            onClick={async () => {
-                              if (
-                                confirm(
-                                  `Archive Customer ${r.name}?\n\nThis customer will be hidden from active lists but their records will be preserved.`
-                                )
-                              ) {
-                                try {
-                                  await ApiClient.archiveCustomer(r.id);
-                                  toast.success("Customer archived successfully!");
-                                  navigate({ search: (old) => ({ ...old, tab: "archived" }) });
-                                  router.invalidate();
-                                } catch (e: any) {
-                                  toast.error(e.message || "Failed to archive customer");
+                            className="h-7 px-2 text-xs font-medium hover:bg-muted cursor-pointer"
+                            onClick={() => handleOpenSheet(r.id, "edit")}
+                          >
+                            Edit
+                          </Button>
+                          {r.isArchived ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 px-2 text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 cursor-pointer"
+                              onClick={async () => {
+                                if (confirm(`Are you sure you want to restore customer ${r.name}?`)) {
+                                  try {
+                                    await ApiClient.restoreCustomer(r.id);
+                                    toast.success("Customer restored successfully!");
+                                    navigate({ search: (old) => ({ ...old, tab: "all" }) });
+                                    router.invalidate();
+                                  } catch (e: any) {
+                                    toast.error(e.message || "Failed to restore customer");
+                                  }
                                 }
-                              }
+                              }}
+                            >
+                              Restore
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 px-2 text-xs font-medium text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 cursor-pointer"
+                              onClick={async () => {
+                                if (
+                                  confirm(
+                                    `Archive Customer ${r.name}?\n\nThis customer will be hidden from active lists but their records will be preserved.`
+                                  )
+                                ) {
+                                  try {
+                                    await ApiClient.archiveCustomer(r.id);
+                                    toast.success("Customer archived successfully!");
+                                    navigate({ search: (old) => ({ ...old, tab: "archived" }) });
+                                    router.invalidate();
+                                  } catch (e: any) {
+                                    toast.error(e.message || "Failed to archive customer");
+                                  }
+                                }
+                              }}
+                            >
+                              Archive
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 cursor-pointer"
+                            title="Delete Customer Permanently"
+                            onClick={() => {
+                              setDeleteModalCustomer(r);
+                              setConfirmCustomerNoInput("");
                             }}
                           >
-                            Archive
+                            <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
                           </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 cursor-pointer font-medium"
-                          onClick={() => {
-                            setDeleteModalCustomer(r);
-                            setConfirmCustomerNoInput("");
-                          }}
-                        >
-                          Delete Permanently
-                        </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
@@ -398,9 +402,9 @@ function CustomersIndexPage() {
               return (
                 <Card key={r.id} className="p-4 rounded-xl border border-border/80 bg-card space-y-3 shadow-sm">
                   <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <h4 className="font-bold text-sm text-foreground">{r.name}</h4>
-                      <p className="text-xs text-muted-foreground font-mono">{r.customerNumber} · {r.phone}</p>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-bold text-sm text-foreground truncate" title={r.name}>{r.name}</h4>
+                      <p className="text-xs text-muted-foreground font-mono truncate">{r.customerNumber} · {r.phone}</p>
                     </div>
                     <Badge className={statusBadge(status)}>{status}</Badge>
                   </div>
@@ -420,14 +424,28 @@ function CustomersIndexPage() {
                       </div>
                     </div>
                   )}
-                  <div className="flex items-center justify-end gap-2 pt-1 border-t border-border/50">
-                    <Button variant="ghost" size="sm" className="h-8 text-xs text-gold" onClick={() => handleOpenSheet(r.id, "view")}>View</Button>
-                    <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => handleOpenSheet(r.id, "edit")}>Edit</Button>
+                  <div className="flex flex-wrap items-center justify-end gap-1.5 pt-2.5 border-t border-border/50">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs font-semibold text-gold border-gold/30 hover:bg-gold/10 cursor-pointer"
+                      onClick={() => handleOpenSheet(r.id, "view")}
+                    >
+                      View
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs font-medium cursor-pointer"
+                      onClick={() => handleOpenSheet(r.id, "edit")}
+                    >
+                      Edit
+                    </Button>
                     {r.isArchived ? (
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        className="h-8 text-xs text-emerald-600 dark:text-emerald-400"
+                        className="h-8 text-xs font-medium text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10 cursor-pointer"
                         onClick={async () => {
                           if (confirm(`Are you sure you want to restore customer ${r.name}?`)) {
                             try {
@@ -445,9 +463,9 @@ function CustomersIndexPage() {
                       </Button>
                     ) : (
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        className="h-8 text-xs text-destructive"
+                        className="h-8 text-xs font-medium text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/10 cursor-pointer"
                         onClick={async () => {
                           if (confirm(`Archive Customer ${r.name}?`)) {
                             try {
@@ -465,15 +483,16 @@ function CustomersIndexPage() {
                       </Button>
                     )}
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
-                      className="h-8 text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 cursor-pointer font-medium"
+                      className="h-8 text-xs font-medium text-rose-600 dark:text-rose-400 border-rose-500/30 hover:bg-rose-500/10 cursor-pointer"
+                      title="Delete Customer Permanently"
                       onClick={() => {
                         setDeleteModalCustomer(r);
                         setConfirmCustomerNoInput("");
                       }}
                     >
-                      Delete Permanently
+                      <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
                     </Button>
                   </div>
                 </Card>
