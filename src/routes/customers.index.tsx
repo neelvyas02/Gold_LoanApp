@@ -72,8 +72,7 @@ function CustomersIndexPage() {
   // Filter Counts
   const allCount = customers.length;
   const activeCount = customers.filter(c => !c.isArchived && c.loans?.some((l: any) => ["Active", "Due Soon", "Overdue"].includes(l.status))).length;
-  const closedCount = customers.filter(c => !c.isArchived && c.loans && c.loans.length > 0 && c.loans.every((l: any) => l.status === "Closed")).length;
-  const archivedCount = customers.filter(c => c.isArchived).length;
+  const archivedCount = customers.filter(c => c.isArchived || (c.loans && c.loans.length > 0 && c.loans.every((l: any) => l.status === "Closed"))).length;
 
   // Detail Sheet States
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -213,12 +212,6 @@ function CustomersIndexPage() {
                 className="h-8 rounded-lg px-3.5 text-xs font-semibold transition-all duration-200 cursor-pointer data-[state=active]:bg-card data-[state=active]:text-gold data-[state=active]:shadow-sm"
               >
                 Active Loans {activeCount > 0 && `(${activeCount})`}
-              </TabsTrigger>
-              <TabsTrigger
-                value="closed"
-                className="h-8 rounded-lg px-3.5 text-xs font-semibold transition-all duration-200 cursor-pointer data-[state=active]:bg-card data-[state=active]:text-gold data-[state=active]:shadow-sm"
-              >
-                Closed Loans {closedCount > 0 && `(${closedCount})`}
               </TabsTrigger>
               <TabsTrigger
                 value="archived"

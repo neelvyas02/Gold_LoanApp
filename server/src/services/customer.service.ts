@@ -16,16 +16,18 @@ export class CustomerService {
           status: { in: ["Active", "Due Soon", "Overdue"] },
         },
       };
-    } else if (tab === "closed" || tab === "closed_loans") {
-      whereClause.isArchived = false;
-      whereClause.loans = {
-        every: {
-          status: "Closed",
+    } else if (tab === "archived" || tab === "closed" || tab === "closed_loans" || tab === "deactivated") {
+      whereClause.OR = [
+        { isArchived: true },
+        {
+          loans: {
+            every: {
+              status: "Closed",
+            },
+            some: {},
+          },
         },
-        some: {},
-      };
-    } else if (tab === "archived" || tab === "deactivated") {
-      whereClause.isArchived = true;
+      ];
     }
 
     if (search && search.trim()) {
