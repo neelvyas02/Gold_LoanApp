@@ -20,6 +20,8 @@ export class CustomerService {
               status: { in: ["Active", "Due Soon", "Overdue"] },
             },
           };
+        } else if (tab === "activated") {
+          whereClause.isActivated = true;
         } else if (tab === "closed") {
           whereClause.loans = {
             every: {

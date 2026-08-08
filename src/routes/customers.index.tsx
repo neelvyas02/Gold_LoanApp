@@ -20,8 +20,9 @@ export const Route = createFileRoute("/customers/")({
     search: (search?.search as string | undefined) || undefined,
     tab: (search?.tab as string | undefined) || "all",
   }),
-  loader: async ({ search }: any) => {
-    return ApiClient.getCustomers(search?.search, search?.tab);
+  loaderDeps: ({ search: { search, tab } }) => ({ search, tab }),
+  loader: async ({ deps: { search, tab } }: any) => {
+    return ApiClient.getCustomers(search, tab);
   },
   component: CustomersIndexPage,
   head: () => ({
@@ -199,9 +200,11 @@ function CustomersIndexPage() {
               })
             }
           >
-            <TabsList className="bg-muted">
+            <TabsList className="bg-muted overflow-x-auto flex-nowrap max-w-full">
               <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="active">Active</TabsTrigger>
+              <TabsTrigger value="active">Active Loans</TabsTrigger>
+              <TabsTrigger value="activated">Activated Portal</TabsTrigger>
+              <TabsTrigger value="closed">Closed Loans</TabsTrigger>
               <TabsTrigger value="archived">Archived</TabsTrigger>
             </TabsList>
           </Tabs>
