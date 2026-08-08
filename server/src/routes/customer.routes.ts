@@ -6,8 +6,9 @@ import {
   updateCustomer,
   archiveCustomer,
   restoreCustomer,
+  deleteCustomerPermanently,
 } from "../controllers/customer.controller.js";
-import { authMiddleware, requireAdminOrEmployee } from "../middleware/auth.middleware.js";
+import { authMiddleware, requireAdmin, requireAdminOrEmployee } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
@@ -19,5 +20,6 @@ router.post("/", createCustomer);
 router.put("/:id", updateCustomer);
 router.patch("/:id/archive", archiveCustomer);
 router.patch("/:id/restore", restoreCustomer);
+router.delete("/:id/permanent", authMiddleware, requireAdmin, deleteCustomerPermanently);
 
 export default router;

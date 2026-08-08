@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
-import { Plus, Search, Filter, Loader2 } from "lucide-react";
+import { Plus, Search, Filter, Loader2, Trash2, AlertTriangle } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ApiClient, getFileUrl } from "@/lib/api-client";
 
 export const Route = createFileRoute("/customers/")({
@@ -92,6 +93,32 @@ function CustomersIndexPage() {
   const [editNomineeMobile, setEditNomineeMobile] = useState("");
   const [editAddress, setEditAddress] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
+
+  // Permanent Delete Modal States
+  const [deleteModalCustomer, setDeleteModalCustomer] = useState<any | null>(null);
+  const [confirmCustomerNoInput, setConfirmCustomerNoInput] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handlePermanentDelete = async () => {
+    if (!deleteModalCustomer) return;
+    if (confirmCustomerNoInput.trim() !== deleteModalCustomer.customerNumber) {
+      toast.error(`Please type "${deleteModalCustomer.customerNumber}" exactly to confirm.`);
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      await ApiClient.deleteCustomerPermanently(deleteModalCustomer.id);
+      toast.success("Customer permanently deleted successfully.");
+      setDeleteModalCustomer(null);
+      setConfirmCustomerNoInput("");
+      router.invalidate();
+    } catch (e: any) {
+      toast.error(e.message || "Failed to permanently delete customer");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const handleOpenSheet = async (id: string, mode: "view" | "edit") => {
     setIsSheetOpen(true);
@@ -328,6 +355,17 @@ function CustomersIndexPage() {
                             Archive
                           </Button>
                         )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 cursor-pointer font-medium"
+                          onClick={() => {
+                            setDeleteModalCustomer(r);
+                            setConfirmCustomerNoInput("");
+                          }}
+                        >
+                          Delete Permanently
+                        </Button>
                       </TableCell>
                     </TableRow>
                   );
@@ -426,6 +464,17 @@ function CustomersIndexPage() {
                         Archive
                       </Button>
                     )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 cursor-pointer font-medium"
+                      onClick={() => {
+                        setDeleteModalCustomer(r);
+                        setConfirmCustomerNoInput("");
+                      }}
+                    >
+                      Delete Permanently
+                    </Button>
                   </div>
                 </Card>
               );
@@ -673,6 +722,76 @@ function CustomersIndexPage() {
           ) : null}
         </SheetContent>
       </Sheet>
+
+      {/* Strong Confirmation Dialog for Permanent Customer Deletion */}
+      <Dialog
+        open={Boolean(deleteModalCustomer)}
+        onOpenChange={(open) => {
+          if (!open && !isDeleting) {
+            setDeleteModalCustomer(null);
+            setConfirmCustomerNoInput("");
+          }
+        }}
+      >
+        <DialogContent className="max-w-md p-6 rounded-2xl bg-card border border-rose-500/30 shadow-2xl space-y-4">
+          <DialogHeader className="space-y-2">
+            <DialogTitle className="text-lg font-bold text-rose-600 dark:text-rose-400 flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-rose-600" /> Delete Customer Permanently?
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground leading-relaxed">
+              This action is <strong className="text-rose-600 dark:text-rose-400">irreversible</strong>. The customer record, loans, ornaments, payments, uploaded documents, and authentication data will be <strong>permanently removed</strong> from the system database.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs space-y-1.5">
+            <p className="font-semibold text-rose-600 dark:text-rose-400">Record to be deleted:</p>
+            <p className="text-foreground"><strong>Name:</strong> {deleteModalCustomer?.name}</p>
+            <p className="text-foreground"><strong>Customer No:</strong> <code className="font-mono bg-background px-1.5 py-0.5 rounded text-rose-600 font-bold">{deleteModalCustomer?.customerNumber}</code></p>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs font-semibold text-foreground">
+              To confirm, type <span className="font-mono font-bold text-rose-600">{deleteModalCustomer?.customerNumber}</span> below:
+            </Label>
+            <Input
+              value={confirmCustomerNoInput}
+              onChange={(e) => setConfirmCustomerNoInput(e.target.value)}
+              placeholder={`Type ${deleteModalCustomer?.customerNumber} to confirm`}
+              className="font-mono text-sm h-10 border-rose-500/40 focus-visible:ring-rose-500/40"
+              disabled={isDeleting}
+            />
+          </div>
+
+          <DialogFooter className="flex gap-2 justify-end pt-3 border-t border-border/60">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteModalCustomer(null);
+                setConfirmCustomerNoInput("");
+              }}
+              disabled={isDeleting}
+              className="cursor-pointer"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={confirmCustomerNoInput.trim() !== deleteModalCustomer?.customerNumber || isDeleting}
+              onClick={handlePermanentDelete}
+              className="bg-rose-600 hover:bg-rose-700 text-white shadow-md cursor-pointer font-semibold min-w-[160px]"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete Customer Permanently"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }

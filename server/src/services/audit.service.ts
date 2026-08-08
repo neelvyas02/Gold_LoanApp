@@ -1,7 +1,14 @@
 import { prisma } from "../config/prisma.js";
 
 export class AuditService {
-  static async log(module: string, action: string, referenceId: string | null, description: string) {
+  static async log(
+    module: string,
+    action: string,
+    referenceId: string | null,
+    description: string,
+    performerId?: string,
+    performerRole?: string
+  ) {
     try {
       return await prisma.auditLog.create({
         data: {
@@ -9,6 +16,8 @@ export class AuditService {
           action,
           referenceId,
           description,
+          performerId,
+          performerRole,
         },
       });
     } catch (error) {

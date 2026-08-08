@@ -64,8 +64,8 @@ export const CustomerCreateSchema = z
     nomineeName: z.string().optional().nullable().or(z.literal("")),
     nomineePhone: z.string().optional().nullable().or(z.literal("")),
     address: z.string().min(1, "Address is required"),
-    aadhaarDocument: z.string({ required_error: "Aadhaar Card document upload is required." }).min(1, "Aadhaar Card document upload is required."),
-    panDocument: z.string({ required_error: "PAN Card document upload is required." }).min(1, "PAN Card document upload is required."),
+    aadhaarDocument: z.string().optional().nullable().or(z.literal("")),
+    panDocument: z.string().optional().nullable().or(z.literal("")),
     loan: LoanCreateSchema.optional(),
     ornaments: z.array(OrnamentSchema).optional(),
     documents: z

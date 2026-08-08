@@ -47,6 +47,14 @@ export function requireCustomer(req: AuthenticatedRequest, res: Response, next: 
   next();
 }
 
+export function requireAdmin(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  if (req.user?.role !== "Admin") {
+    res.status(403).json({ success: false, message: "Access denied. Admin privileges required." });
+    return;
+  }
+  next();
+}
+
 export function requireAdminOrEmployee(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   if (req.user?.role !== "Admin" && req.user?.role !== "Employee") {
     res.status(403).json({ success: false, message: "Access denied. Admin or Employee privileges required." });

@@ -109,3 +109,29 @@ export async function restoreCustomer(
     next(error);
   }
 }
+
+export async function deleteCustomerPermanently(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const id = req.params.id as string;
+    const authReq = req as any;
+    const performerId = authReq.user?.id;
+    const performerRole = authReq.user?.role;
+
+    const result = await CustomerService.deleteCustomerPermanently(
+      id,
+      performerId,
+      performerRole
+    );
+
+    res.json({
+      success: true,
+      message: result.message || "Customer permanently deleted successfully.",
+    });
+  } catch (error) {
+    next(error);
+  }
+}

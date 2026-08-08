@@ -164,6 +164,10 @@ export const ApiClient = {
     return safeFetch<any>(`/customers/${id}/restore`, { method: "PATCH" });
   },
 
+  async deleteCustomerPermanently(id: string) {
+    return safeFetch<any>(`/customers/${id}/permanent`, { method: "DELETE" });
+  },
+
   // Admin Loans
   async getLoans() {
     return safeFetch<any[]>("/loans", { method: "GET" });

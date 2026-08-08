@@ -1,3 +1,5 @@
+import path from "node:path";
+import fs from "node:fs";
 import { prisma } from "../config/prisma.js";
 import { generateCustomerId } from "../utils/generateCustomerId.js";
 import { generateLoanNumber } from "../utils/generateLoanNumber.js";
@@ -397,5 +399,80 @@ export class CustomerService {
     );
 
     return customer;
+  }
+
+  static async deleteCustomerPermanently(id: string, performerId?: string, performerRole?: string) {
+    const customer = await prisma.customer.findUnique({
+      where: { id },
+      include: {
+        documents: true,
+        loans: {
+          include: {
+            ornaments: {
+              include: { photos: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!customer) {
+      throw new Error("Customer not found");
+    }
+
+    // 1. Gather all file paths for storage cleanup
+    const filePathsToClean: string[] = [];
+
+    if (customer.profilePhoto) filePathsToClean.push(customer.profilePhoto);
+    if (customer.aadhaarDocument) filePathsToClean.push(customer.aadhaarDocument);
+    if (customer.panDocument) filePathsToClean.push(customer.panDocument);
+
+    customer.documents?.forEach((doc) => {
+      if (doc.filePath) filePathsToClean.push(doc.filePath);
+    });
+
+    customer.loans?.forEach((loan) => {
+      loan.ornaments?.forEach((ornament) => {
+        ornament.photos?.forEach((photo) => {
+          if (photo.filePath) filePathsToClean.push(photo.filePath);
+        });
+      });
+    });
+
+    // 2. Write AuditLog before deletion so that log entry is preserved
+    await AuditService.log(
+      "Customer",
+      "PERMANENT_DELETE",
+      customer.id,
+      `Customer ${customer.name} (${customer.customerNumber}) permanently deleted`,
+      performerId,
+      performerRole || "Admin"
+    );
+
+    // 3. Perform atomic DB deletion inside a Prisma transaction
+    await prisma.$transaction(async (tx) => {
+      await tx.customer.delete({
+        where: { id },
+      });
+    });
+
+    // 4. Safely clean up associated physical files from disk
+    filePathsToClean.forEach((filePath) => {
+      try {
+        const fullPath = path.isAbsolute(filePath)
+          ? filePath
+          : path.join(process.cwd(), filePath);
+        if (fs.existsSync(fullPath)) {
+          fs.unlinkSync(fullPath);
+        }
+      } catch (err) {
+        console.error(`Warning: Failed to clean up file ${filePath}:`, err);
+      }
+    });
+
+    return {
+      success: true,
+      message: "Customer permanently deleted successfully.",
+    };
   }
 }

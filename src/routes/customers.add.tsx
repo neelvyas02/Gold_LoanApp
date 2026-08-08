@@ -30,7 +30,7 @@ export const Route = createFileRoute("/customers/add")({
   }),
 });
 
-const MANDATORY_DOCS = [
+const KYC_DOCS = [
   { id: "Aadhaar Card", name: "Aadhaar Card", errorKey: "aadhaarUpload" },
   { id: "PAN Card", name: "PAN Card", errorKey: "panUpload" },
 ];
@@ -330,8 +330,6 @@ function AddCustomerPage() {
   };
 
   // Live Validity Check
-  const isAadhaarDocUploaded = uploadedDocuments.some((d) => d.documentType === "Aadhaar Card" || d.documentType === "Aadhaar");
-  const isPanDocUploaded = uploadedDocuments.some((d) => d.documentType === "PAN Card" || d.documentType === "PAN");
   const isFormValid =
     formData.name.trim().length >= 3 &&
     /^\d{10}$/.test(formData.mobile.trim()) &&
@@ -339,8 +337,6 @@ function AddCustomerPage() {
     /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(formData.pan.trim()) &&
     /^\d{12}$/.test(formData.aadhaar.trim()) &&
     formData.address.trim().length > 0 &&
-    isAadhaarDocUploaded &&
-    isPanDocUploaded &&
     amount > 0 &&
     rate >= 0 &&
     Boolean(formData.loanDate) &&
@@ -444,14 +440,6 @@ function AddCustomerPage() {
           newErrors[`ornament-estimatedValue-${index}`] = "Estimated value must be greater than zero.";
         }
       });
-
-      if (!isAadhaarDocUploaded) {
-        newErrors.aadhaarUpload = "Aadhaar Card document upload is required.";
-      }
-
-      if (!isPanDocUploaded) {
-        newErrors.panUpload = "PAN Card document upload is required.";
-      }
 
       if (Object.keys(newErrors).length > 0) {
         setErrors(newErrors);
@@ -684,12 +672,11 @@ function AddCustomerPage() {
         </Section>
 
         {/* Documents */}
-        <Section title="Compulsory Documents Upload" description="Aadhaar Card and PAN Card uploads are mandatory">
+        <Section title="Document Uploads (Optional)" description="Aadhaar Card and PAN Card document uploads are optional">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {MANDATORY_DOCS.map((d) => {
+            {KYC_DOCS.map((d) => {
               const docInfo = uploadedDocuments.find((doc) => doc.documentType === d.name || doc.documentType === d.id);
               const isUploading = uploadingDoc === d.name;
-              const errorMsg = errors[d.errorKey];
               const isUploaded = Boolean(docInfo);
 
               return (
@@ -698,26 +685,22 @@ function AddCustomerPage() {
                   id={d.errorKey}
                   className={`p-4 rounded-xl border transition-all ${
                     isUploaded
-                      ? "border-emerald-500 bg-emerald-500/10"
-                      : "border-destructive bg-destructive/5"
+                      ? "border-emerald-500/80 bg-emerald-500/10"
+                      : "border-border/80 bg-card"
                   }`}
                 >
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold">
-                        {isUploaded ? "🟢" : "🔴"} {d.name} <span className="text-destructive">*</span>
+                      <span className="text-sm font-semibold">
+                        {d.name} <span className="text-muted-foreground font-normal text-xs">(Optional)</span>
                       </span>
                     </div>
-                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                      isUploaded ? "bg-emerald-600/20 text-emerald-700 dark:text-emerald-300" : "bg-destructive/20 text-destructive"
+                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                      isUploaded ? "bg-emerald-600/20 text-emerald-700 dark:text-emerald-300" : "bg-muted text-muted-foreground"
                     }`}>
-                      {isUploaded ? `${docInfo?.fileName || "Uploaded"} ✓` : "No file uploaded"}
+                      {isUploaded ? `✓ ${docInfo?.fileName || "Uploaded"}` : "Optional"}
                     </span>
                   </div>
-
-                  {errorMsg && !isUploaded && (
-                    <p className="text-xs text-destructive font-medium mb-3">🔴 {errorMsg}</p>
-                  )}
 
                   <div className="flex items-center gap-2">
                     <label className="cursor-pointer inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-card border border-border hover:bg-muted text-xs font-medium text-foreground transition-colors shadow-sm">
@@ -726,7 +709,7 @@ function AddCustomerPage() {
                       ) : (
                         <Upload className="h-4 w-4 text-gold" />
                       )}
-                      <span>{isUploaded ? "Replace File" : "Upload File"}</span>
+                      <span>{isUploaded ? "Replace File" : `Upload ${d.name}`}</span>
                       <input
                         type="file"
                         className="hidden"
@@ -739,8 +722,8 @@ function AddCustomerPage() {
                       />
                     </label>
                     {isUploaded && (
-                      <span className="text-[11px] text-muted-foreground truncate">
-                        Path: {docInfo?.filePath}
+                      <span className="text-[11px] text-muted-foreground truncate max-w-[200px]">
+                        {docInfo?.fileName}
                       </span>
                     )}
                   </div>
