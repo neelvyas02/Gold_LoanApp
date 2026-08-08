@@ -179,13 +179,15 @@ function CustomersIndexPage() {
         </Button>
       }
     >
-      <Card className="p-4 md:p-6 rounded-2xl bg-card border-border shadow-[var(--shadow-soft)]">
-        <div className="flex flex-col md:flex-row md:items-center gap-3 mb-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <Card className="p-4 md:p-6 rounded-2xl bg-card border-border shadow-[var(--shadow-soft)] space-y-4">
+        {/* Top Control Bar: Search & Smooth Aligned Filter Tabs */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3.5 pb-2 border-b border-border/60">
+          {/* Search Input */}
+          <div className="relative w-full lg:max-w-md">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search by name, phone, loan number…"
-              className="pl-9 h-10 bg-muted/50 border-transparent focus-visible:bg-transparent"
+              className="pl-10 h-10 rounded-xl bg-muted/40 border-border/80 text-sm transition-all focus-visible:bg-background focus-visible:border-gold focus-visible:ring-gold/20"
               value={search || ""}
               onChange={(e) =>
                 navigate({
@@ -194,6 +196,8 @@ function CustomersIndexPage() {
               }
             />
           </div>
+
+          {/* Cleanly Aligned Filter Tabs */}
           <Tabs
             value={tab}
             onValueChange={(val) =>
@@ -201,18 +205,48 @@ function CustomersIndexPage() {
                 search: (old) => ({ ...old, tab: val }),
               })
             }
+            className="w-full lg:w-auto overflow-x-auto no-scrollbar"
           >
-            <TabsList className="bg-muted overflow-x-auto flex-nowrap max-w-full">
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="active">Active Loans</TabsTrigger>
-              <TabsTrigger value="activated">Activated Portal</TabsTrigger>
-              <TabsTrigger value="closed">Closed Loans</TabsTrigger>
-              <TabsTrigger value="archived">Archived</TabsTrigger>
+            <TabsList className="h-10 bg-muted/60 p-1 rounded-xl flex items-center gap-1 w-max min-w-full lg:min-w-0 border border-border/50">
+              <TabsTrigger
+                value="all"
+                className="h-8 rounded-lg px-3.5 text-xs font-semibold transition-all duration-200 cursor-pointer data-[state=active]:bg-card data-[state=active]:text-gold data-[state=active]:shadow-sm"
+              >
+                All
+              </TabsTrigger>
+              <TabsTrigger
+                value="active"
+                className="h-8 rounded-lg px-3.5 text-xs font-semibold transition-all duration-200 cursor-pointer data-[state=active]:bg-card data-[state=active]:text-gold data-[state=active]:shadow-sm"
+              >
+                Active Loans
+              </TabsTrigger>
+              <TabsTrigger
+                value="activated"
+                className="h-8 rounded-lg px-3.5 text-xs font-semibold transition-all duration-200 cursor-pointer data-[state=active]:bg-card data-[state=active]:text-gold data-[state=active]:shadow-sm"
+              >
+                Portal Activated
+              </TabsTrigger>
+              <TabsTrigger
+                value="closed"
+                className="h-8 rounded-lg px-3.5 text-xs font-semibold transition-all duration-200 cursor-pointer data-[state=active]:bg-card data-[state=active]:text-gold data-[state=active]:shadow-sm"
+              >
+                Closed Loans
+              </TabsTrigger>
+              <TabsTrigger
+                value="archived"
+                className="h-8 rounded-lg px-3.5 text-xs font-semibold transition-all duration-200 cursor-pointer data-[state=active]:bg-card data-[state=active]:text-gold data-[state=active]:shadow-sm"
+              >
+                Archived
+              </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
 
-        <div className="overflow-x-auto -mx-4 md:-mx-6">
+        {/* Smooth Transition Animated Table Container */}
+        <div
+          key={`${tab}-${search || ""}`}
+          className="overflow-x-auto -mx-4 md:-mx-6 animate-in fade-in-50 slide-in-from-bottom-1 duration-300 ease-out"
+        >
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent border-border">
