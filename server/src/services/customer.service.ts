@@ -9,52 +9,74 @@ export class CustomerService {
   static async getCustomers(search?: string, tab?: string) {
     const whereClause: any = {};
 
-    if (tab === "archived") {
-      whereClause.isArchived = true;
-    } else {
+    if (tab === "activated" || tab === "active") {
       whereClause.isArchived = false;
-      if (tab && tab !== "all") {
-        if (tab === "active") {
-          whereClause.loans = {
-            some: {
-              status: { in: ["Active", "Due Soon", "Overdue"] },
-            },
-          };
-        } else if (tab === "activated") {
-          whereClause.isActivated = true;
-        } else if (tab === "closed") {
-          whereClause.loans = {
-            every: {
-              status: "Closed",
-            },
-            some: {},
-          };
-        }
-      }
+      whereClause.isActive = true;
+      whereClause.loans = {
+        some: {
+          status: { in: ["Active", "Due Soon", "Overdue"] },
+        },
+      };
+    } else if (tab === "deactivated" || tab === "archived") {
+      whereClause.OR = [
+        { isArchived: true },
+        { isActive: false },
+      ];
+    } else if (tab === "closed") {
+      whereClause.isArchived = false;
+      whereClause.isActive = true;
+      whereClause.loans = {
+        every: {
+          status: "Closed",
+        },
+        some: {},
+      };
     }
 
-    if (search) {
-      whereClause.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        { phone: { contains: search } },
-        { email: { contains: search, mode: "insensitive" } },
-        { aadhaar: { contains: search } },
-        { pan: { contains: search, mode: "insensitive" } },
-        {
-          loans: {
-            some: {
-              loanNumber: { contains: search, mode: "insensitive" },
+    if (search && search.trim()) {
+      const trimmed = search.trim();
+      const searchConditions = {
+        OR: [
+          { name: { contains: trimmed, mode: "insensitive" } },
+          { phone: { contains: trimmed } },
+          { email: { contains: trimmed, mode: "insensitive" } },
+          { customerNumber: { contains: trimmed, mode: "insensitive" } },
+          { aadhaar: { contains: trimmed } },
+          { pan: { contains: trimmed, mode: "insensitive" } },
+          {
+            loans: {
+              some: {
+                loanNumber: { contains: trimmed, mode: "insensitive" },
+              },
             },
           },
-        },
-      ];
+        ],
+      };
+
+      if (whereClause.OR) {
+        whereClause.AND = [
+          { OR: whereClause.OR },
+          searchConditions,
+        ];
+        delete whereClause.OR;
+      } else {
+        whereClause.AND = [searchConditions];
+      }
     }
 
     const customers = await prisma.customer.findMany({
       where: whereClause,
       include: {
         loans: {
-          select: { loanNumber: true, status: true, loanClosingDate: true, outstandingBalance: true, createdAt: true },
+          select: {
+            id: true,
+            loanNumber: true,
+            loanAmount: true,
+            status: true,
+            loanClosingDate: true,
+            outstandingBalance: true,
+            createdAt: true,
+          },
           orderBy: { createdAt: "desc" },
         },
       },

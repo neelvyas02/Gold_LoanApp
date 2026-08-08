@@ -34,18 +34,46 @@ export const Route = createFileRoute("/customers/")({
 });
 
 function statusBadge(s: string) {
-  if (s === "Active") return "bg-[color:var(--success)]/10 text-[color:var(--success)]";
-  if (s === "Due Soon") return "bg-warning/20 text-[color:var(--warning-foreground)]";
-  if (s === "Overdue") return "bg-destructive/10 text-destructive";
-  if (s === "Archived") return "bg-amber-500/15 text-amber-500 font-semibold border border-amber-500/30";
-  return "bg-muted text-muted-foreground";
+  if (s === "Activated" || s === "Active") return "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 font-semibold";
+  if (s === "Due Soon") return "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 font-semibold";
+  if (s === "Overdue") return "bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 font-semibold";
+  if (s === "Deactivated" || s === "Archived") return "bg-slate-500/15 text-slate-600 dark:text-slate-400 border border-slate-500/30 font-semibold";
+  if (s === "Closed") return "bg-gray-500/15 text-gray-600 dark:text-gray-400 border border-gray-500/30 font-semibold";
+  return "bg-muted text-muted-foreground font-semibold";
+}
+
+function getDisplayStatus(r: any): "Activated" | "Due Soon" | "Overdue" | "Deactivated" | "Closed" {
+  if (r.isArchived || r.isActive === false) {
+    return "Deactivated";
+  }
+  const activeLoans = r.loans?.filter((l: any) => l.status !== "Closed") || [];
+  if (activeLoans.some((l: any) => l.status === "Overdue")) {
+    return "Overdue";
+  }
+  if (activeLoans.some((l: any) => l.status === "Due Soon")) {
+    return "Due Soon";
+  }
+  if (activeLoans.length > 0) {
+    return "Activated";
+  }
+  const allClosed = r.loans && r.loans.length > 0 && r.loans.every((l: any) => l.status === "Closed");
+  if (allClosed) {
+    return "Closed";
+  }
+  return "Activated";
 }
 
 function CustomersIndexPage() {
   const router = useRouter();
   const navigate = useNavigate({ from: Route.fullPath });
   const { search, tab } = Route.useSearch();
-  const customers = Route.useLoaderData() as any[];
+  const customers = (Route.useLoaderData() as any[]) || [];
+
+  // Filter Counts
+  const activatedCount = customers.filter(c => !c.isArchived && c.isActive !== false && c.loans?.some((l: any) => ["Active", "Due Soon", "Overdue"].includes(l.status))).length;
+  const deactivatedCount = customers.filter(c => c.isArchived || c.isActive === false).length;
+  const closedCount = customers.filter(c => !c.isArchived && c.isActive !== false && c.loans && c.loans.length > 0 && c.loans.every((l: any) => l.status === "Closed")).length;
+  const allCount = customers.length;
 
   // Detail Sheet States
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -98,79 +126,45 @@ function CustomersIndexPage() {
       return;
     }
     if (!/^\d{10}$/.test(editMobile)) {
-      toast.error("Phone Number must be exactly 10 digits");
+      toast.error("Mobile number must be exactly 10 digits");
       return;
     }
     if (editAlternateMobile && !/^\d{10}$/.test(editAlternateMobile)) {
-      toast.error("Alternate Phone must be exactly 10 digits");
-      return;
-    }
-    if (!/^\d{12}$/.test(editAadhaar)) {
-      toast.error("Aadhaar Number must be exactly 12 digits");
-      return;
-    }
-    if (editPan && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(editPan)) {
-      toast.error("Invalid PAN format (expected ABCDE1234F)");
-      return;
-    }
-    if (editDob) {
-      const d = new Date(editDob);
-      if (d > new Date()) {
-        toast.error("Date of birth cannot be a future date");
-        return;
-      }
-    }
-    if (!editOccupation.trim()) {
-      toast.error("Occupation is required");
-      return;
-    }
-    if (!editNomineeName.trim()) {
-      toast.error("Nominee Name is required");
-      return;
-    }
-    if (!/^\d{10}$/.test(editNomineeMobile)) {
-      toast.error("Nominee Phone must be exactly 10 digits");
-      return;
-    }
-    if (!editAddress.trim()) {
-      toast.error("Address is required");
+      toast.error("Alternate Mobile must be exactly 10 digits");
       return;
     }
 
     setSavingEdit(true);
     try {
-      const payload = {
+      await ApiClient.updateCustomer(activeCustomer.id, {
         name: editName,
         phone: editMobile,
         alternatePhone: editAlternateMobile || undefined,
         aadhaar: editAadhaar,
-        pan: editPan || undefined,
+        pan: editPan,
         dob: editDob || undefined,
         occupation: editOccupation,
         nomineeName: editNomineeName,
         nomineePhone: editNomineeMobile,
         address: editAddress,
-      };
+      });
 
-      await ApiClient.updateCustomer(activeCustomer.id, payload);
       toast.success("Customer details updated successfully");
-      
-      // Reload details and list
-      const updatedData = await ApiClient.getCustomer(activeCustomer.id);
-      setActiveCustomer(updatedData);
-      setSheetMode("view");
       router.invalidate();
+      setIsSheetOpen(false);
     } catch (e: any) {
-      toast.error(e.message || "Failed to update customer");
+      toast.error(e.message || "Failed to update customer details");
     } finally {
       setSavingEdit(false);
     }
   };
 
+  const activeTabValue = tab || "all";
+
   return (
     <AppShell
       title="Customers"
-      subtitle={`${customers.length} total customers`}
+      subtitle={`${allCount} total customer records`}
       actions={
         <Button asChild className="bg-gold text-gold-foreground hover:bg-gold/90 shadow-[var(--shadow-gold)]">
           <Link to="/customers/add" search={{ search: undefined, tab: undefined }}>
@@ -199,7 +193,7 @@ function CustomersIndexPage() {
 
           {/* Cleanly Aligned Filter Tabs */}
           <Tabs
-            value={tab}
+            value={activeTabValue}
             onValueChange={(val) =>
               navigate({
                 search: (old) => ({ ...old, tab: val }),
@@ -212,153 +206,249 @@ function CustomersIndexPage() {
                 value="all"
                 className="h-8 rounded-lg px-3.5 text-xs font-semibold transition-all duration-200 cursor-pointer data-[state=active]:bg-card data-[state=active]:text-gold data-[state=active]:shadow-sm"
               >
-                All
-              </TabsTrigger>
-              <TabsTrigger
-                value="active"
-                className="h-8 rounded-lg px-3.5 text-xs font-semibold transition-all duration-200 cursor-pointer data-[state=active]:bg-card data-[state=active]:text-gold data-[state=active]:shadow-sm"
-              >
-                Active Loans
+                ALL {allCount > 0 && `(${allCount})`}
               </TabsTrigger>
               <TabsTrigger
                 value="activated"
                 className="h-8 rounded-lg px-3.5 text-xs font-semibold transition-all duration-200 cursor-pointer data-[state=active]:bg-card data-[state=active]:text-gold data-[state=active]:shadow-sm"
               >
-                Portal Activated
+                ACTIVATED {activatedCount > 0 && `(${activatedCount})`}
+              </TabsTrigger>
+              <TabsTrigger
+                value="deactivated"
+                className="h-8 rounded-lg px-3.5 text-xs font-semibold transition-all duration-200 cursor-pointer data-[state=active]:bg-card data-[state=active]:text-gold data-[state=active]:shadow-sm"
+              >
+                DEACTIVATED {deactivatedCount > 0 && `(${deactivatedCount})`}
               </TabsTrigger>
               <TabsTrigger
                 value="closed"
                 className="h-8 rounded-lg px-3.5 text-xs font-semibold transition-all duration-200 cursor-pointer data-[state=active]:bg-card data-[state=active]:text-gold data-[state=active]:shadow-sm"
               >
-                Closed Loans
-              </TabsTrigger>
-              <TabsTrigger
-                value="archived"
-                className="h-8 rounded-lg px-3.5 text-xs font-semibold transition-all duration-200 cursor-pointer data-[state=active]:bg-card data-[state=active]:text-gold data-[state=active]:shadow-sm"
-              >
-                Archived
+                CLOSED {closedCount > 0 && `(${closedCount})`}
               </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
 
-        {/* Smooth Transition Animated Table Container */}
+        {/* Smooth Transition Animated Content Container */}
         <div
-          key={`${tab}-${search || ""}`}
-          className="overflow-x-auto -mx-4 md:-mx-6 animate-in fade-in-50 slide-in-from-bottom-1 duration-300 ease-out"
+          key={`${activeTabValue}-${search || ""}`}
+          className="animate-in fade-in-50 slide-in-from-bottom-1 duration-300 ease-out"
         >
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent border-border">
-                <TableHead className="pl-4 md:pl-6">Customer No.</TableHead>
-                <TableHead>Customer Name</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>Loan Number</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right pr-4 md:pr-6">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {customers.map((r) => {
-                // Determine active status: active if any active/overdue loan exists
-                const activeLoans = r.loans?.filter((l: any) => l.status !== "Closed") || [];
-                const isOverdue = activeLoans.some((l: any) => l.status === "Overdue");
-                const hasActive = activeLoans.length > 0;
-                const status = r.isArchived ? "Archived" : isOverdue ? "Overdue" : hasActive ? "Active" : "Closed";
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto -mx-4 md:-mx-6">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent border-border">
+                  <TableHead className="pl-4 md:pl-6">Customer No.</TableHead>
+                  <TableHead>Customer Name</TableHead>
+                  <TableHead>Phone</TableHead>
+                  <TableHead>Loan Number</TableHead>
+                  <TableHead className="text-right">Loan Amount</TableHead>
+                  <TableHead className="text-right">Outstanding Balance</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                  <TableHead className="text-right pr-4 md:pr-6">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {customers.map((r) => {
+                  const status = getDisplayStatus(r);
+                  const primaryLoan = r.loans?.[0];
+                  const loanAmount = primaryLoan?.loanAmount || 0;
+                  const balance = primaryLoan?.outstandingBalance ?? primaryLoan?.balance ?? 0;
 
-                return (
-                  <TableRow key={r.id} className="hover:bg-muted/40 border-border">
-                    <TableCell className="pl-4 md:pl-6 font-mono text-xs">{r.customerNumber}</TableCell>
-                    <TableCell className="font-medium text-foreground">{r.name}</TableCell>
-                    <TableCell className="text-muted-foreground">{r.phone}</TableCell>
-                    <TableCell className="font-mono text-xs text-muted-foreground">
-                      {r.loans?.[0]?.loanNumber || "-"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={statusBadge(status)}>{status}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right pr-4 md:pr-6 space-x-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-[color:var(--gold)]"
-                        onClick={() => handleOpenSheet(r.id, "view")}
-                      >
-                        View
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleOpenSheet(r.id, "edit")}
-                      >
-                        Edit
-                      </Button>
-                      {r.isArchived ? (
+                  return (
+                    <TableRow key={r.id} className="hover:bg-muted/40 border-border">
+                      <TableCell className="pl-4 md:pl-6 font-mono text-xs text-muted-foreground">{r.customerNumber}</TableCell>
+                      <TableCell className="font-semibold text-foreground truncate max-w-[180px]">{r.name}</TableCell>
+                      <TableCell className="text-muted-foreground text-xs whitespace-nowrap">{r.phone}</TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">
+                        {primaryLoan?.loanNumber || "-"}
+                      </TableCell>
+                      <TableCell className="text-right font-mono text-xs font-semibold text-foreground whitespace-nowrap">
+                        {primaryLoan ? `₹${loanAmount.toLocaleString("en-IN")}` : "-"}
+                      </TableCell>
+                      <TableCell className="text-right font-mono text-xs font-semibold text-foreground whitespace-nowrap">
+                        {primaryLoan ? `₹${balance.toLocaleString("en-IN")}` : "-"}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge className={statusBadge(status)}>{status}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right pr-4 md:pr-6 space-x-1 whitespace-nowrap">
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-[color:var(--success)] cursor-pointer"
-                          onClick={async () => {
-                            if (confirm(`Are you sure you want to restore customer ${r.name}?`)) {
-                              try {
-                                await ApiClient.restoreCustomer(r.id);
-                                toast.success("Customer restored successfully!");
-                                navigate({ search: (old) => ({ ...old, tab: "all" }) });
-                                router.invalidate();
-                              } catch (e: any) {
-                                toast.error(e.message || "Failed to restore customer");
-                              }
-                            }
-                          }}
+                          className="text-[color:var(--gold)]"
+                          onClick={() => handleOpenSheet(r.id, "view")}
                         >
-                          Restore
+                          View
                         </Button>
-                      ) : (
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-destructive cursor-pointer"
-                          onClick={async () => {
-                            if (
-                              confirm(
-                                `Archive Customer ${r.name}?\n\nThis customer will be hidden from the active list but their records will be preserved.`
-                              )
-                            ) {
-                              try {
-                                await ApiClient.archiveCustomer(r.id);
-                                toast.success("Customer archived successfully!");
-                                navigate({ search: (old) => ({ ...old, tab: "archived" }) });
-                                router.invalidate();
-                              } catch (e: any) {
-                                toast.error(e.message || "Failed to archive customer");
-                              }
-                            }
-                          }}
+                          onClick={() => handleOpenSheet(r.id, "edit")}
                         >
-                          Archive
+                          Edit
                         </Button>
-                      )}
+                        {r.isArchived || r.isActive === false ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-emerald-600 dark:text-emerald-400 cursor-pointer"
+                            onClick={async () => {
+                              if (confirm(`Are you sure you want to restore customer ${r.name}?`)) {
+                                try {
+                                  await ApiClient.restoreCustomer(r.id);
+                                  toast.success("Customer restored successfully!");
+                                  navigate({ search: (old) => ({ ...old, tab: "all" }) });
+                                  router.invalidate();
+                                } catch (e: any) {
+                                  toast.error(e.message || "Failed to restore customer");
+                                }
+                              }
+                            }}
+                          >
+                            Restore
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive cursor-pointer"
+                            onClick={async () => {
+                              if (
+                                confirm(
+                                  `Deactivate/Archive Customer ${r.name}?\n\nThis customer will be hidden from the active list but their records will be preserved.`
+                                )
+                              ) {
+                                try {
+                                  await ApiClient.archiveCustomer(r.id);
+                                  toast.success("Customer deactivated successfully!");
+                                  navigate({ search: (old) => ({ ...old, tab: "deactivated" }) });
+                                  router.invalidate();
+                                } catch (e: any) {
+                                  toast.error(e.message || "Failed to deactivate customer");
+                                }
+                              }
+                            }}
+                          >
+                            Deactivate
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+                {customers.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center py-12 text-muted-foreground font-medium">
+                      {activeTabValue === "deactivated"
+                        ? "No deactivated loans found."
+                        : activeTabValue === "activated"
+                        ? "No activated loans found."
+                        : activeTabValue === "closed"
+                        ? "No closed loans found."
+                        : "No records found."}
                     </TableCell>
                   </TableRow>
-                );
-              })}
-              {customers.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
-                    {tab === "archived"
-                      ? "No archived customers found."
-                      : tab === "activated"
-                      ? "No portal activated customers found."
-                      : tab === "active"
-                      ? "No active loan customers found."
-                      : tab === "closed"
-                      ? "No closed loan customers found."
-                      : "No customers found."}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Mobile Responsive Stacked Card View */}
+          <div className="block md:hidden space-y-3">
+            {customers.map((r) => {
+              const status = getDisplayStatus(r);
+              const primaryLoan = r.loans?.[0];
+              const loanAmount = primaryLoan?.loanAmount || 0;
+              const balance = primaryLoan?.outstandingBalance ?? primaryLoan?.balance ?? 0;
+
+              return (
+                <Card key={r.id} className="p-4 rounded-xl border border-border/80 bg-card space-y-3 shadow-sm">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h4 className="font-bold text-sm text-foreground">{r.name}</h4>
+                      <p className="text-xs text-muted-foreground font-mono">{r.customerNumber} · {r.phone}</p>
+                    </div>
+                    <Badge className={statusBadge(status)}>{status}</Badge>
+                  </div>
+                  {primaryLoan && (
+                    <div className="grid grid-cols-3 gap-2 p-2.5 rounded-lg bg-muted/40 text-xs border border-border/50">
+                      <div>
+                        <span className="text-[10px] uppercase text-muted-foreground font-semibold block">Loan No</span>
+                        <span className="font-mono text-foreground font-medium truncate block">{primaryLoan.loanNumber}</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[10px] uppercase text-muted-foreground font-semibold block">Amount</span>
+                        <span className="font-mono font-semibold text-foreground">₹{loanAmount.toLocaleString("en-IN")}</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[10px] uppercase text-muted-foreground font-semibold block">Balance</span>
+                        <span className="font-mono font-semibold text-foreground">₹{balance.toLocaleString("en-IN")}</span>
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-end gap-2 pt-1 border-t border-border/50">
+                    <Button variant="ghost" size="sm" className="h-8 text-xs text-gold" onClick={() => handleOpenSheet(r.id, "view")}>View</Button>
+                    <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => handleOpenSheet(r.id, "edit")}>Edit</Button>
+                    {r.isArchived || r.isActive === false ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 text-xs text-emerald-600 dark:text-emerald-400"
+                        onClick={async () => {
+                          if (confirm(`Are you sure you want to restore customer ${r.name}?`)) {
+                            try {
+                              await ApiClient.restoreCustomer(r.id);
+                              toast.success("Customer restored successfully!");
+                              navigate({ search: (old) => ({ ...old, tab: "all" }) });
+                              router.invalidate();
+                            } catch (e: any) {
+                              toast.error(e.message || "Failed to restore customer");
+                            }
+                          }
+                        }}
+                      >
+                        Restore
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 text-xs text-destructive"
+                        onClick={async () => {
+                          if (confirm(`Deactivate/Archive Customer ${r.name}?`)) {
+                            try {
+                              await ApiClient.archiveCustomer(r.id);
+                              toast.success("Customer deactivated successfully!");
+                              navigate({ search: (old) => ({ ...old, tab: "deactivated" }) });
+                              router.invalidate();
+                            } catch (e: any) {
+                              toast.error(e.message || "Failed to deactivate customer");
+                            }
+                          }
+                        }}
+                      >
+                        Deactivate
+                      </Button>
+                    )}
+                  </div>
+                </Card>
+              );
+            })}
+            {customers.length === 0 && (
+              <div className="text-center py-10 px-4 text-muted-foreground text-sm font-medium bg-muted/20 rounded-xl border border-border/60">
+                {activeTabValue === "deactivated"
+                  ? "No deactivated loans found."
+                  : activeTabValue === "activated"
+                  ? "No activated loans found."
+                  : activeTabValue === "closed"
+                  ? "No closed loans found."
+                  : "No records found."}
+              </div>
+            )}
+          </div>
         </div>
       </Card>
 
