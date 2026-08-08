@@ -35,7 +35,9 @@ export const Route = createFileRoute("/customers/")({
 
 function statusBadge(s: string) {
   if (s === "Active") return "bg-[color:var(--success)]/10 text-[color:var(--success)]";
+  if (s === "Due Soon") return "bg-warning/20 text-[color:var(--warning-foreground)]";
   if (s === "Overdue") return "bg-destructive/10 text-destructive";
+  if (s === "Archived") return "bg-amber-500/15 text-amber-500 font-semibold border border-amber-500/30";
   return "bg-muted text-muted-foreground";
 }
 
@@ -261,12 +263,13 @@ function CustomersIndexPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-[color:var(--success)]"
+                          className="text-[color:var(--success)] cursor-pointer"
                           onClick={async () => {
                             if (confirm(`Are you sure you want to restore customer ${r.name}?`)) {
                               try {
                                 await ApiClient.restoreCustomer(r.id);
                                 toast.success("Customer restored successfully!");
+                                navigate({ search: (old) => ({ ...old, tab: "all" }) });
                                 router.invalidate();
                               } catch (e: any) {
                                 toast.error(e.message || "Failed to restore customer");
@@ -280,7 +283,7 @@ function CustomersIndexPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-destructive"
+                          className="text-destructive cursor-pointer"
                           onClick={async () => {
                             if (
                               confirm(
@@ -290,6 +293,7 @@ function CustomersIndexPage() {
                               try {
                                 await ApiClient.archiveCustomer(r.id);
                                 toast.success("Customer archived successfully!");
+                                navigate({ search: (old) => ({ ...old, tab: "archived" }) });
                                 router.invalidate();
                               } catch (e: any) {
                                 toast.error(e.message || "Failed to archive customer");
@@ -306,8 +310,16 @@ function CustomersIndexPage() {
               })}
               {customers.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
-                    No customers found.
+                  <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
+                    {tab === "archived"
+                      ? "No archived customers found."
+                      : tab === "activated"
+                      ? "No portal activated customers found."
+                      : tab === "active"
+                      ? "No active loan customers found."
+                      : tab === "closed"
+                      ? "No closed loan customers found."
+                      : "No customers found."}
                   </TableCell>
                 </TableRow>
               )}
