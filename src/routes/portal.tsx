@@ -1,8 +1,10 @@
 import { createFileRoute, Outlet, useNavigate, useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Gem, LayoutDashboard, ScrollText, IndianRupee, LifeBuoy, Settings, User, LogOut, Bell, Sun, Moon, Check, Trash2, X, AlertCircle } from "lucide-react";
+import { Gem, LayoutDashboard, ScrollText, IndianRupee, LifeBuoy, Settings, User, LogOut, Bell, Sun, Moon, Check, Trash2, X, AlertCircle, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ApiClient, getFileUrl } from "@/lib/api-client";
+import { VFLogo } from "@/components/ui/vf-logo";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/portal")({
@@ -19,6 +21,7 @@ function PortalLayout() {
   // Notification states
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const authRoutes = ["/portal/login", "/portal/signup", "/portal/forgot-password"];
   const isAuthPage = authRoutes.includes(location.pathname);
@@ -205,10 +208,18 @@ function PortalLayout() {
       <div className="flex-1 flex flex-col md:pl-64 pb-16 md:pb-0 min-w-0">
         {/* Top Header */}
         <header className="sticky top-0 z-30 h-16 bg-background/95 backdrop-blur border-b border-border flex items-center justify-between px-4 sm:px-6">
-          <div className="flex items-center gap-3 md:hidden">
-            <div className="h-8 w-8 rounded-lg bg-gold grid place-items-center">
-              <Gem className="h-4 w-4 text-gold-foreground" />
-            </div>
+          <div className="flex items-center gap-2 md:hidden">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-xl hover:bg-muted cursor-pointer"
+              onClick={() => setMobileNavOpen(true)}
+              title="Open Portal Menu"
+              aria-label="Open Portal Menu"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+            <VFLogo size="sm" />
             <span className="font-bold text-sm text-foreground">Vyas Finance</span>
           </div>
 
@@ -364,6 +375,73 @@ function PortalLayout() {
           })}
         </nav>
       </div>
+
+      {/* Mobile Customer Portal Drawer Navigation */}
+      <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+        <SheetContent side="left" className="w-72 p-0 bg-card border-r border-border flex flex-col">
+          <SheetHeader className="px-6 py-5 border-b border-border flex flex-row items-center gap-3 text-left">
+            <VFLogo size="sm" />
+            <div className="min-w-0">
+              <SheetTitle className="text-sm font-bold tracking-tight text-foreground">
+                Vyas Finance
+              </SheetTitle>
+              <p className="text-[10px] text-muted-foreground">Customer Portal</p>
+            </div>
+          </SheetHeader>
+
+          <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
+            {menuItems.map((item) => {
+              const isActive = location.pathname.startsWith(item.href);
+              const Icon = item.icon;
+              return (
+                <Button
+                  key={item.label}
+                  variant={isActive ? "secondary" : "ghost"}
+                  className={`w-full justify-start gap-3 rounded-xl px-4 py-2.5 text-sm font-medium ${
+                    isActive ? "text-gold font-semibold bg-gold/5" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  onClick={() => {
+                    setMobileNavOpen(false);
+                    navigate({ to: item.href });
+                  }}
+                >
+                  <Icon className="h-4 w-4" />
+                  {item.label}
+                </Button>
+              );
+            })}
+          </nav>
+
+          <div className="p-4 border-t border-border mt-auto">
+            {user && (
+              <div className="flex items-center gap-3 px-3 py-2 rounded-xl mb-3 bg-muted/40">
+                <div className="h-9 w-9 rounded-full bg-gold/10 border border-gold/20 flex items-center justify-center font-bold text-gold overflow-hidden shrink-0">
+                  {user.profilePhoto ? (
+                    <img src={getFileUrl(user.profilePhoto)} alt={user.name} className="h-full w-full object-cover" />
+                  ) : (
+                    user.name ? user.name[0].toUpperCase() : "C"
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold truncate text-foreground">{user.name}</p>
+                  <p className="text-xs text-muted-foreground truncate">{user.customerNumber}</p>
+                </div>
+              </div>
+            )}
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-3 text-destructive hover:text-destructive hover:bg-destructive/5 rounded-xl px-4"
+              onClick={() => {
+                setMobileNavOpen(false);
+                handleLogout();
+              }}
+            >
+              <LogOut className="h-4 w-4" />
+              Sign Out
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

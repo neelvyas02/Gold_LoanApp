@@ -16,7 +16,8 @@ import {
   CheckCircle2,
   AlertTriangle,
   Info,
-  LifeBuoy
+  LifeBuoy,
+  Menu
 } from "lucide-react";
 import { type ReactNode, useEffect, useState, useRef } from "react";
 import { Input } from "@/components/ui/input";
@@ -26,6 +27,7 @@ import { ApiClient } from "@/lib/api-client";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { VFLogo } from "@/components/ui/vf-logo";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -68,6 +70,7 @@ export function AppShell({
   const [searchResults, setSearchResults] = useState<any>(null);
   const [searching, setSearching] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
   // 1. Initial Theme & Data Loading
@@ -214,6 +217,15 @@ export function AppShell({
       <div className="flex-1 min-w-0 flex flex-col">
         <header className="h-16 bg-card border-b border-border flex items-center gap-4 px-4 md:px-8 relative z-50">
           <div className="lg:hidden flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(true)}
+              className="h-9 w-9 rounded-lg hover:bg-muted grid place-items-center text-muted-foreground hover:text-foreground transition-colors mr-1 cursor-pointer"
+              title="Open Navigation Menu"
+              aria-label="Open Navigation Menu"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
             <VFLogo size="sm" />
             <span className="font-semibold text-foreground">Vyas Finance</span>
           </div>
@@ -446,6 +458,67 @@ export function AppShell({
           </div>
         </main>
       </div>
+
+      {/* Mobile Drawer Navigation Sheet */}
+      <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+        <SheetContent side="left" className="w-72 p-0 bg-card border-r border-border flex flex-col">
+          <SheetHeader className="h-16 flex items-center gap-3 px-6 border-b border-border text-left">
+            <VFLogo size="sm" />
+            <div className="min-w-0">
+              <SheetTitle className="text-sm font-semibold leading-tight truncate text-foreground">
+                Vyas Finance
+              </SheetTitle>
+              <p className="text-[11px] text-muted-foreground leading-tight">Loan Management</p>
+            </div>
+          </SheetHeader>
+          <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+            {NAV.map((item) => {
+              const active = pathname === item.to || pathname.startsWith(item.to + "/");
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                    active
+                      ? "bg-accent text-accent-foreground font-semibold"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  )}
+                >
+                  <Icon className={cn("h-4 w-4", active && "text-gold")} />
+                  {item.label}
+                  {active && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-gold" />}
+                </Link>
+              );
+            })}
+          </nav>
+          <div className="p-3 border-t border-border mt-auto">
+            <div className="flex items-center gap-3 px-3 py-2 rounded-lg mb-2">
+              <Avatar className="h-9 w-9">
+                <AvatarFallback className="bg-gold text-gold-foreground text-xs font-bold">
+                  {currentUser.username.substring(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold leading-tight text-foreground truncate">{currentUser.username}</p>
+                <p className="text-[10px] text-muted-foreground leading-tight">{currentUser.role}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                handleLogout();
+              }}
+              className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer"
+            >
+              <LogOut className="h-4 w-4" />
+              Logout
+            </button>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
