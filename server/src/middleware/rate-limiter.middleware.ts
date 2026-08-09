@@ -31,6 +31,8 @@ export const otpRateLimiter = rateLimit({
     if (email && typeof email === "string" && email.trim()) {
       return `otp_${email.toLowerCase().trim()}`;
     }
+    const ip = req.ip || req.socket?.remoteAddress || "127.0.0.1";
+    return `otp_${ip}`;
   },
 });
 
@@ -46,7 +48,7 @@ export const adminForgotLimiter = rateLimit({
   legacyHeaders: false,
   validate: { keyGeneratorIpFallback: false, xForwardedForHeader: false },
   keyGenerator: (req) => {
-    const ip = req.ip || req.socket.remoteAddress || "127.0.0.1";
+    const ip = req.ip || req.socket?.remoteAddress || "127.0.0.1";
     const email = req.body?.email;
     const normalizedEmail = email && typeof email === "string" ? email.toLowerCase().trim() : "unknown";
     return `admin_forgot_${ip}_${normalizedEmail}`;
@@ -65,7 +67,7 @@ export const adminOtpVerifyLimiter = rateLimit({
   legacyHeaders: false,
   validate: { keyGeneratorIpFallback: false, xForwardedForHeader: false },
   keyGenerator: (req) => {
-    const ip = req.ip || req.socket.remoteAddress || "127.0.0.1";
+    const ip = req.ip || req.socket?.remoteAddress || "127.0.0.1";
     const email = req.body?.email;
     const normalizedEmail = email && typeof email === "string" ? email.toLowerCase().trim() : "unknown";
     return `admin_verify_${ip}_${normalizedEmail}`;
@@ -84,7 +86,7 @@ export const adminResetLimiter = rateLimit({
   legacyHeaders: false,
   validate: { keyGeneratorIpFallback: false, xForwardedForHeader: false },
   keyGenerator: (req) => {
-    const ip = req.ip || req.socket.remoteAddress || "127.0.0.1";
+    const ip = req.ip || req.socket?.remoteAddress || "127.0.0.1";
     return `admin_reset_${ip}`;
   },
 });
