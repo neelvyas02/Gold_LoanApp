@@ -1,4 +1,13 @@
-import rateLimit from "express-rate-limit";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
+
+/**
+ * Safely extracts and normalizes the client IP address (IPv4 or IPv6 CIDR subnet)
+ * using express-rate-limit's built-in ipKeyGenerator helper.
+ */
+function getClientIp(req: any): string {
+  const rawIp = req.ip || req.socket?.remoteAddress || "127.0.0.1";
+  return ipKeyGenerator(rawIp);
+}
 
 // General auth endpoint rate limiter: max 20 requests per 1-minute window
 export const authRateLimiter = rateLimit({
@@ -26,12 +35,12 @@ export const otpRateLimiter = rateLimit({
     keyGeneratorIpFallback: false,
     xForwardedForHeader: false,
   },
-  keyGenerator: (req) => {
+  keyGenerator: (req): string => {
     const email = req.body?.email || req.body?.identifier;
     if (email && typeof email === "string" && email.trim()) {
       return `otp_${email.toLowerCase().trim()}`;
     }
-    const ip = req.ip || req.socket?.remoteAddress || "127.0.0.1";
+    const ip = getClientIp(req);
     return `otp_${ip}`;
   },
 });
@@ -47,8 +56,8 @@ export const adminForgotLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   validate: { keyGeneratorIpFallback: false, xForwardedForHeader: false },
-  keyGenerator: (req) => {
-    const ip = req.ip || req.socket?.remoteAddress || "127.0.0.1";
+  keyGenerator: (req): string => {
+    const ip = getClientIp(req);
     const email = req.body?.email;
     const normalizedEmail = email && typeof email === "string" ? email.toLowerCase().trim() : "unknown";
     return `admin_forgot_${ip}_${normalizedEmail}`;
@@ -66,8 +75,8 @@ export const adminOtpVerifyLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   validate: { keyGeneratorIpFallback: false, xForwardedForHeader: false },
-  keyGenerator: (req) => {
-    const ip = req.ip || req.socket?.remoteAddress || "127.0.0.1";
+  keyGenerator: (req): string => {
+    const ip = getClientIp(req);
     const email = req.body?.email;
     const normalizedEmail = email && typeof email === "string" ? email.toLowerCase().trim() : "unknown";
     return `admin_verify_${ip}_${normalizedEmail}`;
@@ -85,8 +94,8 @@ export const adminResetLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   validate: { keyGeneratorIpFallback: false, xForwardedForHeader: false },
-  keyGenerator: (req) => {
-    const ip = req.ip || req.socket?.remoteAddress || "127.0.0.1";
+  keyGenerator: (req): string => {
+    const ip = getClientIp(req);
     return `admin_reset_${ip}`;
   },
 });
