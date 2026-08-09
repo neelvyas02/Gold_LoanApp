@@ -33,19 +33,14 @@ function UnifiedLoginPage() {
   const navigate = useNavigate();
   const search = useSearch({ from: "/" });
 
-  const activeMode = search.mode === "customer" ? "customer" : "admin";
-  const [accountType, setAccountType] = useState<"admin" | "customer">(activeMode);
+  // Derive active account mode directly from URL search parameters (defaults to 'admin')
+  const accountType: "admin" | "customer" = search.mode === "customer" ? "customer" : "admin";
   const [loading, setLoading] = useState(false);
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [contactModalOpen, setContactModalOpen] = useState(false);
-
-  // Sync mode search param if passed (?mode=admin or ?mode=customer)
-  useEffect(() => {
-    setAccountType(activeMode);
-  }, [activeMode]);
 
   // Load remembered identifier if saved
   useEffect(() => {
