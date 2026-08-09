@@ -120,6 +120,37 @@ class ResendEmailService {
       throw new Error(`Failed to deliver password reset OTP email: ${result.error || "Unknown Resend error"}`);
     }
     return { success: true, messageId: result.messageId };
+  /**
+   * Admin / Employee Password Reset OTP Email
+   */
+  async sendAdminPasswordResetEmail(email: string, otp: string): Promise<{ success: boolean; messageId?: string }> {
+    const subject = "Vyas Finance Admin Password Reset OTP";
+    const textBody = `Hello,\n\nYour One-Time Password (OTP) to reset your Vyas Finance account password is:\n\n${otp}\n\nThis OTP is valid for 10 minutes.\n\nDo not share this OTP with anyone.\n\nRegards,\nVyas Finance`;
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 28px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <h2 style="color: #b8860b; margin: 0; font-size: 26px; font-weight: 700;">Vyas Finance</h2>
+          <p style="color: #64748b; font-size: 14px; margin-top: 4px;">Admin & Employee Account Recovery</p>
+        </div>
+        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+        <p style="color: #334155; font-size: 15px; margin-bottom: 12px;">Hello,</p>
+        <p style="color: #334155; font-size: 15px; line-height: 1.5;">Your One-Time Password (OTP) to reset your Vyas Finance account password is:</p>
+        <div style="background-color: #f8fafc; border: 2px dashed #cbd5e1; padding: 20px; text-align: center; border-radius: 10px; font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #1e293b; margin: 24px 0;">
+          ${otp}
+        </div>
+        <p style="color: #64748b; font-size: 13px; line-height: 1.5;">This OTP is valid for <strong>10 minutes</strong>.</p>
+        <p style="color: #64748b; font-size: 13px; line-height: 1.5;">Do not share this OTP with anyone.</p>
+        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0 16px 0;" />
+        <p style="color: #94a3b8; font-size: 12px; margin: 0; text-align: center;">Regards,<br /><strong style="color: #64748b;">Vyas Finance</strong></p>
+      </div>
+    `;
+
+    const result = await this.sendEmail({ to: email, subject, html, text: textBody });
+    if (!result.success) {
+      throw new Error(`Failed to deliver admin password reset OTP email: ${result.error || "Unknown Resend error"}`);
+    }
+    return { success: true, messageId: result.messageId };
   }
 
   /**

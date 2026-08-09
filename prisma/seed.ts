@@ -41,11 +41,13 @@ async function main() {
     data: [
       {
         username: "admin",
+        email: "vyas.finance06@gmail.com",
         password: "$2b$10$RCmLhFmd4LLY7W5XQ1L7AeqceJql8UN8RZyG5w.8yHYWpfjOaeqbi", // "admin"
         role: "Admin",
       },
       {
         username: "employee",
+        email: "employee.dev@vyasfinance.local",
         password: "$2b$10$ICOZ157iUDLkL33RabV0h.5hn5r2Nw0pNL0vWK2eDfXYv6joip/a.", // "employee"
         role: "Employee",
       },

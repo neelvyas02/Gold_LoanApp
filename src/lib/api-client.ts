@@ -244,6 +244,34 @@ export const ApiClient = {
     return data;
   },
 
+  async adminForgotPassword(payload: { email: string }) {
+    return safeFetch<any>("/auth/forgot-password", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async adminVerifyOTP(payload: { email: string; otp: string }) {
+    return safeFetch<{ resetToken: string }>("/auth/verify-otp", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async adminResendOTP(payload: { email: string }) {
+    return safeFetch<any>("/auth/resend-otp", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async adminResetPassword(payload: { resetToken: string; newPassword: string; confirmPassword: string }) {
+    return safeFetch<any>("/auth/reset-password", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
   logout() {
     removeStorageItem("token");
     removeStorageItem("refreshToken");

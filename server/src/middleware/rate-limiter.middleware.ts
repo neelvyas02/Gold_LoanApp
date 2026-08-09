@@ -33,4 +33,57 @@ export const otpRateLimiter = rateLimit({
     }
     return req.ip || req.socket.remoteAddress || "127.0.0.1";
   },
+// Strict Admin OTP Request Rate Limiter: max 5 requests per 15 mins per IP & Email combination
+export const adminForgotLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: {
+    success: false,
+    message: "Too many password recovery requests. Please try again after 15 minutes.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: { keyGeneratorIpFallback: false, xForwardedForHeader: false },
+  keyGenerator: (req) => {
+    const ip = req.ip || req.socket.remoteAddress || "127.0.0.1";
+    const email = req.body?.email;
+    const normalizedEmail = email && typeof email === "string" ? email.toLowerCase().trim() : "unknown";
+    return `admin_forgot_${ip}_${normalizedEmail}`;
+  },
+});
+
+// Admin OTP Verification Rate Limiter: max 10 attempts per 15 mins per IP & Email
+export const adminOtpVerifyLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: {
+    success: false,
+    message: "Too many verification attempts. Please try again after 15 minutes.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: { keyGeneratorIpFallback: false, xForwardedForHeader: false },
+  keyGenerator: (req) => {
+    const ip = req.ip || req.socket.remoteAddress || "127.0.0.1";
+    const email = req.body?.email;
+    const normalizedEmail = email && typeof email === "string" ? email.toLowerCase().trim() : "unknown";
+    return `admin_verify_${ip}_${normalizedEmail}`;
+  },
+});
+
+// Admin Password Reset Rate Limiter: max 5 attempts per 15 mins per IP
+export const adminResetLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: {
+    success: false,
+    message: "Too many password reset requests. Please try again after 15 minutes.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: { keyGeneratorIpFallback: false, xForwardedForHeader: false },
+  keyGenerator: (req) => {
+    const ip = req.ip || req.socket.remoteAddress || "127.0.0.1";
+    return `admin_reset_${ip}`;
+  },
 });
