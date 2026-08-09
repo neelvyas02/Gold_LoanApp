@@ -59,8 +59,8 @@ export function BranchContactModal({ isOpen, onClose }: BranchContactModalProps)
             <Mail className="h-5 w-5 text-gold shrink-0 mt-0.5" />
             <div>
               <p className="font-semibold text-xs text-muted-foreground uppercase tracking-wider">Official Email Support</p>
-              <a href="mailto:otp@neelvyas.me" className="text-sm font-medium hover:text-gold transition-colors mt-0.5 inline-block">
-                support@neelvyas.me
+              <a href="mailto:vyas.finance06@gmail.com" className="text-sm font-medium hover:text-gold transition-colors mt-0.5 inline-block">
+                vyas.finance06@gmail.com
               </a>
             </div>
           </div>

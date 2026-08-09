@@ -162,17 +162,6 @@ function CustomerLoginPage() {
           <div className="relative z-10 flex flex-col items-center lg:items-start space-y-6 max-w-xl">
             {/* Standalone Premium Brand Logo Asset with Transparent Background */}
             <VFLogo size="2xl" variant="full" animated={true} />
-
-            {/* Subtitle & Tagline outside the logo asset */}
-            <div className="space-y-2 text-center lg:text-left pt-2">
-              <p className="text-lg sm:text-xl font-bold tracking-wide text-amber-400 flex items-center gap-2 justify-center lg:justify-start">
-                <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
-                Customer Portal Access
-              </p>
-              <p className="text-sm text-muted-foreground/85 leading-relaxed max-w-md">
-                Track your gold loan status, inspect insured ornament valuations, and download official payment receipts.
-              </p>
-            </div>
           </div>
         </div>
 

@@ -22,7 +22,7 @@ class ResendEmailService {
   }
 
   private getFromAddress(): string {
-    return process.env.EMAIL_FROM || "Vyas Finance <otp@neelvyas.me>";
+    return process.env.EMAIL_FROM || "Vyas Finance <vyas.finance06@gmail.com>";
   }
 
   /**

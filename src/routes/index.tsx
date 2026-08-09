@@ -23,8 +23,8 @@ export const Route = createFileRoute("/")({
   component: UnifiedLoginPage,
   head: () => ({
     meta: [
-      { title: "Vyas Finance — Gold Loan Management Sign In" },
-      { name: "description", content: "Secure portal sign in for Vyas Finance Admin & Customer accounts." },
+      { title: "Vyas Finance — Sign In" },
+      { name: "description", content: "Secure portal sign in for Vyas Finance accounts." },
     ],
   }),
 });
@@ -140,9 +140,6 @@ function UnifiedLoginPage() {
               <span className="text-sm font-extrabold tracking-tight leading-none text-foreground">
                 Vyas <span className="bg-gradient-to-r from-amber-200 via-amber-400 to-amber-600 bg-clip-text text-transparent">Finance</span>
               </span>
-              <span className="text-[10px] text-muted-foreground font-medium hidden sm:inline-block">
-                Gold Loan Management System
-              </span>
             </div>
           </div>
 
@@ -185,17 +182,6 @@ function UnifiedLoginPage() {
           <div className="relative z-10 flex flex-col items-center lg:items-start space-y-6 max-w-xl">
             {/* Standalone Premium Brand Logo Asset with Transparent Background */}
             <VFLogo size="2xl" variant="full" animated={true} />
-
-            {/* Subtitle & Tagline outside the logo asset */}
-            <div className="space-y-2 text-center lg:text-left pt-2">
-              <p className="text-lg sm:text-xl font-bold tracking-wide text-amber-400 flex items-center gap-2 justify-center lg:justify-start">
-                <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
-                Gold Loan Management System
-              </p>
-              <p className="text-sm text-muted-foreground/85 leading-relaxed max-w-md">
-                Institution-grade security and transparent gold collateral management for modern wealth operations.
-              </p>
-            </div>
           </div>
         </div>
 
