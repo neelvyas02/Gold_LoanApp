@@ -46,7 +46,8 @@ function ForgotPasswordPage() {
   const navigate = useNavigate();
   const search = useSearch({ from: "/portal/forgot-password" });
 
-  const [accountType, setAccountType] = useState<"admin" | "customer">("admin");
+  // Derive active account mode directly from URL search parameters (defaults to 'admin')
+  const accountType: "admin" | "customer" = search.mode === "customer" ? "customer" : "admin";
   const [contactModalOpen, setContactModalOpen] = useState(false);
 
   // Admin Recovery Steps: 1 = Identify Email, 2 = Verify OTP, 3 = New Password, 4 = Success
@@ -71,12 +72,6 @@ function ForgotPasswordPage() {
   const [custOtp, setCustOtp] = useState("");
   const [custNewPassword, setCustNewPassword] = useState("");
   const [custConfirmPassword, setCustConfirmPassword] = useState("");
-
-  useEffect(() => {
-    if (search.mode) {
-      setAccountType(search.mode);
-    }
-  }, [search.mode]);
 
   // 10-minute OTP countdown timer
   useEffect(() => {
@@ -107,8 +102,7 @@ function ForgotPasswordPage() {
   };
 
   const handleSwitchMode = (mode: "admin" | "customer") => {
-    setAccountType(mode);
-    navigate({ to: "/portal/forgot-password", search: { mode } });
+    navigate({ to: "/portal/forgot-password", search: { mode }, replace: true });
   };
 
   // Password Policy Checks
@@ -580,7 +574,7 @@ function ForgotPasswordPage() {
 
                 <Button
                   type="button"
-                  onClick={() => navigate({ to: "/", search: { mode: "admin" } })}
+                  onClick={() => navigate({ to: "/", search: { mode: "admin" }, replace: true })}
                   className="w-full bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-slate-950 font-bold rounded-xl h-11 text-sm shadow-md cursor-pointer"
                 >
                   Back to Admin Sign In
