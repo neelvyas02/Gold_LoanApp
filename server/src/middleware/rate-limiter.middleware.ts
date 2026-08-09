@@ -31,8 +31,9 @@ export const otpRateLimiter = rateLimit({
     if (email && typeof email === "string" && email.trim()) {
       return `otp_${email.toLowerCase().trim()}`;
     }
-    return req.ip || req.socket.remoteAddress || "127.0.0.1";
   },
+});
+
 // Strict Admin OTP Request Rate Limiter: max 5 requests per 15 mins per IP & Email combination
 export const adminForgotLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,

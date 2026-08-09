@@ -120,6 +120,8 @@ class ResendEmailService {
       throw new Error(`Failed to deliver password reset OTP email: ${result.error || "Unknown Resend error"}`);
     }
     return { success: true, messageId: result.messageId };
+  }
+
   /**
    * Admin / Employee Password Reset OTP Email
    */
