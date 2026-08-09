@@ -704,11 +704,11 @@ function ForgotPasswordPage() {
         )}
 
         {/* Footer Navigation Links */}
-        <div className="pt-4 border-t border-border/60 flex items-center justify-between text-xs font-medium text-muted-foreground">
+        <div className="pt-4 border-t border-border/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-medium text-muted-foreground">
           <button
             type="button"
             onClick={() => navigate({ to: accountType === "admin" ? "/" : "/portal/login", search: accountType === "admin" ? { mode: "admin" } : undefined })}
-            className="hover:text-gold transition-colors flex items-center gap-1 cursor-pointer"
+            className="hover:text-gold transition-colors flex items-center gap-1 cursor-pointer py-2 px-3 rounded-lg hover:bg-gold/10 active:scale-95 min-h-[40px] touch-manipulation font-semibold"
           >
             ← {accountType === "admin" ? "Back to Admin Sign In" : "Back to Customer Sign In"}
           </button>
@@ -716,7 +716,7 @@ function ForgotPasswordPage() {
           <button
             type="button"
             onClick={() => handleSwitchMode(accountType === "admin" ? "customer" : "admin")}
-            className="text-gold hover:underline font-semibold cursor-pointer"
+            className="text-gold hover:underline font-semibold cursor-pointer py-2 px-3 rounded-lg hover:bg-gold/10 active:scale-95 min-h-[40px] touch-manipulation"
           >
             Switch to {accountType === "admin" ? "Customer Reset" : "Admin Sign In"} →
           </button>

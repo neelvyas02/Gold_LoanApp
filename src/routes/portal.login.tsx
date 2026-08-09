@@ -319,14 +319,14 @@ function CustomerLoginPage() {
               <button
                 type="button"
                 onClick={() => navigate({ to: "/", search: { mode: "admin" } })}
-                className="text-muted-foreground hover:text-gold font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
+                className="text-muted-foreground hover:text-gold font-semibold transition-colors flex items-center gap-1.5 cursor-pointer py-2 px-3 rounded-lg hover:bg-gold/10 active:scale-95 min-h-[40px] touch-manipulation"
               >
                 ← Back to Admin / Staff Sign In
               </button>
               <button
                 type="button"
                 onClick={() => setContactModalOpen(true)}
-                className="text-gold hover:underline font-medium cursor-pointer"
+                className="text-gold hover:underline font-medium cursor-pointer py-2 px-3 rounded-lg hover:bg-gold/10 active:scale-95 min-h-[40px] touch-manipulation"
               >
                 Contact Branch
               </button>

@@ -33,7 +33,8 @@ function UnifiedLoginPage() {
   const navigate = useNavigate();
   const search = useSearch({ from: "/" });
 
-  const [accountType, setAccountType] = useState<"admin" | "customer">("admin");
+  const activeMode = search.mode === "customer" ? "customer" : "admin";
+  const [accountType, setAccountType] = useState<"admin" | "customer">(activeMode);
   const [loading, setLoading] = useState(false);
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -43,10 +44,8 @@ function UnifiedLoginPage() {
 
   // Sync mode search param if passed (?mode=admin or ?mode=customer)
   useEffect(() => {
-    if (search.mode) {
-      setAccountType(search.mode);
-    }
-  }, [search.mode]);
+    setAccountType(activeMode);
+  }, [activeMode]);
 
   // Load remembered identifier if saved
   useEffect(() => {
@@ -123,6 +122,11 @@ function UnifiedLoginPage() {
   const handleSwitchMode = (mode: "admin" | "customer") => {
     setAccountType(mode);
     setErrors({});
+    navigate({
+      to: "/",
+      search: { mode },
+      replace: true,
+    });
   };
 
   return (
