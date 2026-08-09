@@ -130,9 +130,9 @@ function CustomerLoginPage() {
             <button
               type="button"
               onClick={() => navigate({ to: "/", search: { mode: "admin" } })}
-              className="text-muted-foreground hover:text-gold transition-colors font-medium cursor-pointer hidden sm:inline-block"
+              className="text-muted-foreground hover:text-gold transition-colors font-semibold flex items-center gap-1 cursor-pointer hidden sm:inline-flex"
             >
-              Admin Sign In
+              ← Admin / Staff Sign In
             </button>
 
             <button
@@ -315,13 +315,13 @@ function CustomerLoginPage() {
               </Button>
             </form>
 
-            <div className="mt-8 pt-5 border-t border-border/60 flex items-center justify-between text-xs">
+            <div className="mt-8 pt-5 border-t border-border/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
               <button
                 type="button"
                 onClick={() => navigate({ to: "/", search: { mode: "admin" } })}
-                className="text-muted-foreground hover:text-gold font-medium cursor-pointer"
+                className="text-muted-foreground hover:text-gold font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
               >
-                ← Switch to Admin Sign In
+                ← Back to Admin / Staff Sign In
               </button>
               <button
                 type="button"

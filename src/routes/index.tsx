@@ -377,18 +377,33 @@ function UnifiedLoginPage() {
               </Button>
             </form>
 
-            {/* Bottom Contact Branch Footer inside Card */}
-            <div className="mt-8 pt-5 border-t border-border/60 text-center">
-              <p className="text-xs text-muted-foreground">
-                Don't have access?{" "}
+            {/* Bottom Card Footer Navigation */}
+            <div className="mt-8 pt-5 border-t border-border/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+              {accountType === "customer" ? (
                 <button
                   type="button"
-                  onClick={() => setContactModalOpen(true)}
-                  className="text-gold hover:underline font-medium cursor-pointer"
+                  onClick={() => handleSwitchMode("admin")}
+                  className="text-muted-foreground hover:text-gold font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
                 >
-                  Contact your branch administrator.
+                  ← Back to Admin / Staff Sign In
                 </button>
-              </p>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => handleSwitchMode("customer")}
+                  className="text-muted-foreground hover:text-gold font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  Switch to Customer Sign In →
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setContactModalOpen(true)}
+                className="text-gold hover:underline font-medium cursor-pointer"
+              >
+                Contact Branch
+              </button>
             </div>
 
           </Card>
