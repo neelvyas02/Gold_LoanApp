@@ -230,7 +230,7 @@ function CustomerLoginPage() {
                   </Label>
                   <button
                     type="button"
-                    onClick={() => navigate({ to: "/portal/forgot-password" })}
+                    onClick={() => navigate({ to: "/portal/forgot-password", search: { mode: "customer" } })}
                     className="text-xs text-gold hover:underline font-medium cursor-pointer"
                   >
                     Forgot Password?
