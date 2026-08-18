@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useState, useEffect, type FormEvent } from "react";
-import { Lock, User, Smartphone, ShieldCheck, UserCheck, AlertCircle, Eye, EyeOff, HelpCircle, PhoneCall, ArrowRight, Loader2 } from "lucide-react";
+import { Lock, User, Smartphone, ShieldCheck, UserCheck, AlertCircle, Eye, EyeOff, HelpCircle, PhoneCall, ArrowRight, Loader2, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,7 +33,7 @@ function UnifiedLoginPage() {
   const navigate = useNavigate();
   const search = useSearch({ from: "/" });
 
-  // Derive active account mode directly from URL search parameters (defaults to 'admin')
+  // Derive active account mode from URL search parameters (defaults to 'admin')
   const accountType: "admin" | "customer" = search.mode === "customer" ? "customer" : "admin";
   const [loading, setLoading] = useState(false);
   const [identifier, setIdentifier] = useState("");
@@ -115,13 +115,12 @@ function UnifiedLoginPage() {
   }
 
   const handleSwitchMode = (mode: "admin" | "customer") => {
-    setAccountType(mode);
     setErrors({});
-    navigate({
-      to: "/",
-      search: { mode },
-      replace: true,
-    });
+    if (mode === "admin") {
+      navigate({ to: "/admin/login" });
+    } else {
+      navigate({ to: "/portal/login" });
+    }
   };
 
   return (

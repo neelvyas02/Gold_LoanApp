@@ -278,7 +278,7 @@ function ForgotPasswordPage() {
         <div className="flex items-center gap-3 text-xs font-semibold">
           <button
             type="button"
-            onClick={() => navigate({ to: "/", search: { mode: "admin" } })}
+            onClick={() => navigate({ to: "/admin/login" })}
             className="text-muted-foreground hover:text-gold transition-colors flex items-center gap-1 cursor-pointer"
           >
             <ShieldCheck className="h-3.5 w-3.5 text-gold" /> Admin Sign In

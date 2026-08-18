@@ -230,15 +230,15 @@ export const ApiClient = {
     return false;
   },
 
-  // Admin Auth
-  async login(credentials: any) {
+  // Admin & Staff Auth
+  async login(credentials: { username: string; password: string; requiredRole?: string }) {
     const data = await safeFetch<any>("/auth/login", {
       method: "POST",
       body: JSON.stringify(credentials),
     });
     if (data && data.token) {
       setStorageItem("token", data.token);
-      setStorageItem("role", "Admin");
+      setStorageItem("role", data.user?.role || "Admin");
       setStorageItem("user", JSON.stringify(data.user));
     }
     return data;

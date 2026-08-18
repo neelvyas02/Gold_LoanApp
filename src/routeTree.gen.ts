@@ -32,6 +32,7 @@ import { Route as PortalDocumentsRouteImport } from './routes/portal.documents'
 import { Route as PortalDashboardRouteImport } from './routes/portal.dashboard'
 import { Route as PortalActivateAccountRouteImport } from './routes/portal.activate-account'
 import { Route as CustomersAddRouteImport } from './routes/customers.add'
+import { Route as AdminLoginRouteImport } from './routes/admin.login'
 
 const SupportTicketsRoute = SupportTicketsRouteImport.update({
   id: '/support-tickets',
@@ -148,6 +149,11 @@ const CustomersAddRoute = CustomersAddRouteImport.update({
   path: '/add',
   getParentRoute: () => CustomersRoute,
 } as any)
+const AdminLoginRoute = AdminLoginRouteImport.update({
+  id: '/admin/login',
+  path: '/admin/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -160,6 +166,7 @@ export interface FileRoutesByFullPath {
   '/reports': typeof ReportsRoute
   '/settings': typeof SettingsRoute
   '/support-tickets': typeof SupportTicketsRoute
+  '/admin/login': typeof AdminLoginRoute
   '/customers/add': typeof CustomersAddRoute
   '/portal/activate-account': typeof PortalActivateAccountRoute
   '/portal/dashboard': typeof PortalDashboardRoute
@@ -184,6 +191,7 @@ export interface FileRoutesByTo {
   '/reports': typeof ReportsRoute
   '/settings': typeof SettingsRoute
   '/support-tickets': typeof SupportTicketsRoute
+  '/admin/login': typeof AdminLoginRoute
   '/customers/add': typeof CustomersAddRoute
   '/portal/activate-account': typeof PortalActivateAccountRoute
   '/portal/dashboard': typeof PortalDashboardRoute
@@ -210,6 +218,7 @@ export interface FileRoutesById {
   '/reports': typeof ReportsRoute
   '/settings': typeof SettingsRoute
   '/support-tickets': typeof SupportTicketsRoute
+  '/admin/login': typeof AdminLoginRoute
   '/customers/add': typeof CustomersAddRoute
   '/portal/activate-account': typeof PortalActivateAccountRoute
   '/portal/dashboard': typeof PortalDashboardRoute
@@ -237,6 +246,7 @@ export interface FileRouteTypes {
     | '/reports'
     | '/settings'
     | '/support-tickets'
+    | '/admin/login'
     | '/customers/add'
     | '/portal/activate-account'
     | '/portal/dashboard'
@@ -261,6 +271,7 @@ export interface FileRouteTypes {
     | '/reports'
     | '/settings'
     | '/support-tickets'
+    | '/admin/login'
     | '/customers/add'
     | '/portal/activate-account'
     | '/portal/dashboard'
@@ -286,6 +297,7 @@ export interface FileRouteTypes {
     | '/reports'
     | '/settings'
     | '/support-tickets'
+    | '/admin/login'
     | '/customers/add'
     | '/portal/activate-account'
     | '/portal/dashboard'
@@ -312,6 +324,7 @@ export interface RootRouteChildren {
   ReportsRoute: typeof ReportsRoute
   SettingsRoute: typeof SettingsRoute
   SupportTicketsRoute: typeof SupportTicketsRoute
+  AdminLoginRoute: typeof AdminLoginRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -477,6 +490,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CustomersAddRouteImport
       parentRoute: typeof CustomersRoute
     }
+    '/admin/login': {
+      id: '/admin/login'
+      path: '/admin/login'
+      fullPath: '/admin/login'
+      preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -536,6 +556,7 @@ const rootRouteChildren: RootRouteChildren = {
   ReportsRoute: ReportsRoute,
   SettingsRoute: SettingsRoute,
   SupportTicketsRoute: SupportTicketsRoute,
+  AdminLoginRoute: AdminLoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

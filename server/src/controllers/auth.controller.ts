@@ -10,7 +10,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "your_secret_key";
 
 export async function login(req: Request, res: Response, next: NextFunction) {
   try {
-    const { username, password } = req.body;
+    const { username, password, requiredRole } = req.body;
     if (!username || !password) {
       res.status(400).json({ success: false, message: "Username and password are required" });
       return;
@@ -29,6 +29,33 @@ export async function login(req: Request, res: Response, next: NextFunction) {
     if (!isValid) {
       res.status(401).json({ success: false, message: "Invalid username or password" });
       return;
+    }
+
+    // Role check if requiredRole is provided
+    if (requiredRole) {
+      const normalizedReqRole = requiredRole.toLowerCase();
+      const userRole = (user.role || "").toLowerCase();
+
+      if (normalizedReqRole === "admin" && userRole !== "admin") {
+        res.status(403).json({
+          success: false,
+          message: "Access denied. This account does not have Admin privileges. Please use Staff Login.",
+        });
+        return;
+      }
+
+      if (
+        (normalizedReqRole === "staff" || normalizedReqRole === "employee") &&
+        userRole !== "employee" &&
+        userRole !== "staff" &&
+        userRole !== "admin"
+      ) {
+        res.status(403).json({
+          success: false,
+          message: "Access denied. This account does not have Staff access.",
+        });
+        return;
+      }
     }
 
     const token = jwt.sign(
