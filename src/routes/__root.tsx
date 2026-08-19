@@ -201,10 +201,12 @@ function RootComponent() {
             <div className="space-y-2">
               <div className="flex items-center justify-center gap-2">
                 <Loader2 className="h-5 w-5 text-gold animate-spin" />
-                <h2 className="text-base font-bold text-foreground">Connecting securely...</h2>
+                <h2 className="text-base font-bold text-foreground">
+                  {connStatus.message || "Connecting to Vyas Finance..."}
+                </h2>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                {connStatus.message || "Please wait while we establish a secure connection to Vyas Finance."}
+                Please wait while we establish a secure connection. The service is starting up.
               </p>
               {connStatus.attempt && connStatus.maxAttempts && (
                 <div className="pt-2">

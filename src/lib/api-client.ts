@@ -1,6 +1,29 @@
 // API Client for communicating with the Express.js Backend of Vyas Finance
-const RAW_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
-export const API_BASE_URL = RAW_BASE.replace(/\/+$/, "");
+const PRODUCTION_API_URL = "https://gold-loanapp.onrender.com/api";
+const LOCAL_API_URL = "http://localhost:5000/api";
+
+function resolveApiBaseUrl(): string {
+  const envUrl = import.meta.env.VITE_API_BASE_URL;
+  if (envUrl && envUrl.trim() !== "") {
+    return envUrl.replace(/\/+$/, "");
+  }
+
+  if (typeof window !== "undefined") {
+    const hostname = window.location.hostname;
+    if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "0.0.0.0") {
+      return LOCAL_API_URL;
+    }
+    return PRODUCTION_API_URL;
+  }
+
+  if (import.meta.env.PROD) {
+    return PRODUCTION_API_URL;
+  }
+
+  return LOCAL_API_URL;
+}
+
+export const API_BASE_URL = resolveApiBaseUrl();
 export const SERVER_BASE_URL = API_BASE_URL.replace(/\/api\/?$/, "");
 
 export type ConnectionState = "connected" | "connecting" | "failed";
@@ -33,7 +56,17 @@ function setConnectionStatus(status: ConnectionStatus) {
 }
 
 const pendingGetRequests = new Map<string, Promise<any>>();
-const RETRY_DELAYS = [1000, 2000, 4000, 6000];
+const RETRY_DELAYS = [2000, 5000, 10000, 15000];
+
+function getColdStartMessage(attempt: number): string {
+  if (attempt === 1) {
+    return "Connecting to Vyas Finance...";
+  }
+  if (attempt === 2) {
+    return "Waking up the Vyas Finance service...";
+  }
+  return "Still connecting...";
+}
 
 export function getFileUrl(filePath?: string | null): string {
   if (!filePath) return "";
@@ -177,10 +210,11 @@ async function performFetchWithRetry<T>(
       }
 
       const nextDelay = RETRY_DELAYS[attempt];
+      const attemptNum = attempt + 1;
       setConnectionStatus({
         state: "connecting",
-        message: "Connecting securely... Please wait while we reconnect to Vyas Finance.",
-        attempt: attempt + 1,
+        message: getColdStartMessage(attemptNum),
+        attempt: attemptNum,
         maxAttempts: maxRetries,
       });
 
@@ -211,11 +245,20 @@ async function safeFetch<T>(endpoint: string, options?: RequestInit, isRetry = f
 }
 
 export const ApiClient = {
-  async checkHealth() {
+  async checkHealth(): Promise<boolean> {
+    const maxRetries = RETRY_DELAYS.length;
     try {
-      setConnectionStatus({ state: "connecting", message: "Reconnecting to Vyas Finance..." });
+      setConnectionStatus({
+        state: "connecting",
+        message: getColdStartMessage(1),
+        attempt: 1,
+        maxAttempts: maxRetries,
+      });
+
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      // 45-second timeout for Render free tier cold starts
+      const timeoutId = setTimeout(() => controller.abort(), 45000);
+
       const res = await fetch(`${API_BASE_URL}/health`, { signal: controller.signal });
       clearTimeout(timeoutId);
 
@@ -223,10 +266,14 @@ export const ApiClient = {
         setConnectionStatus({ state: "connected" });
         return true;
       }
-    } catch (e) {
+    } catch (e: any) {
       console.warn("Health check failed:", e);
     }
-    setConnectionStatus({ state: "failed", message: "Unable to connect to the Vyas Finance service. Please try again." });
+
+    setConnectionStatus({
+      state: "failed",
+      message: "Unable to connect to the Vyas Finance service. Please try again.",
+    });
     return false;
   },
 
